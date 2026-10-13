@@ -1,7 +1,6 @@
 import type { IOption, IProduct } from './types';
 import { StockLevel, matchesSearch, stockLabel, stockLeft } from './shopText';
-import { countText } from '../strings/plural';
-import { COMBINATIONS, PRODUCTS } from '../strings/common';
+import { PRODUCTS_TABLE } from '../strings/productWords';
 
 /*
  * The owners' Products & stock page, kept apart from SharePoint so it can be
@@ -40,16 +39,18 @@ export function filterCounts(products: IProduct[]): FilterCounts {
 /** "12 products · 3 running low · 2 out of stock · 1 off". Anything there's none of is left out. */
 export function summaryText(products: IProduct[]): string {
   const c = filterCounts(products);
-  const parts = [countText(c.all, PRODUCTS)];
-  if (c.low) parts.push(`${c.low} running low`);
-  if (c.out) parts.push(`${c.out} out of stock`);
-  if (c.off) parts.push(`${c.off} off`);
-  return parts.join(' · ');
+  const parts = [PRODUCTS_TABLE.products(c.all)];
+  if (c.low) parts.push(PRODUCTS_TABLE.runningLow(c.low));
+  if (c.out) parts.push(PRODUCTS_TABLE.outOfStock(c.out));
+  if (c.off) parts.push(PRODUCTS_TABLE.off(c.off));
+  return parts.join(PRODUCTS_TABLE.between);
 }
 
 /** What a product varies by, with how many choices each has: "Colour (2), Size (6)". A dash for nothing. */
 export const variesText = (options: IOption[]): string =>
-  options.length ? options.map(o => `${o.name} (${o.values.length})`).join(', ') : '—';
+  options.length
+    ? options.map(o => PRODUCTS_TABLE.variesBy(o.name, o.values.length)).join(PRODUCTS_TABLE.variesBetween)
+    : PRODUCTS_TABLE.variesByNothing;
 
 /**
  * The small line under the stock number: "12 combinations, 3 out". Nothing for
@@ -59,16 +60,15 @@ export function combinationsText(p: Pick<IProduct, 'options' | 'variants'>): str
   if (!p.options.length) return undefined;
   const all = p.variants.length;
   const out = p.variants.filter(v => stockLeft(v.inStock) === 0).length;
-  const text = countText(all, COMBINATIONS);
   // Every one out shows as 0 already.
-  return out > 0 && out < all ? `${text}, ${out} out` : text;
+  return out > 0 && out < all ? PRODUCTS_TABLE.combinationsOut(all, out) : PRODUCTS_TABLE.combinations(all);
 }
 
 /** What the table says when a search or a quick filter leaves nothing to show. */
 export function nothingText(query: string, filter: ProductFilter): string {
-  if (query.trim()) return 'Nothing matches that search.';
-  if (filter === 'low') return 'Nothing is running low.';
-  if (filter === 'out') return 'Nothing is out of stock.';
-  if (filter === 'off') return 'Every product is in the shop.';
-  return 'There are no products yet.';
+  if (query.trim()) return PRODUCTS_TABLE.noMatch;
+  if (filter === 'low') return PRODUCTS_TABLE.noneLow;
+  if (filter === 'out') return PRODUCTS_TABLE.noneOut;
+  if (filter === 'off') return PRODUCTS_TABLE.noneOff;
+  return PRODUCTS_TABLE.noProducts;
 }

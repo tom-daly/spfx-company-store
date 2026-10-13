@@ -5,6 +5,7 @@ import { IStoreSettings, sendsOrderEmails } from '../../store/settings';
 import { fillInsFor, message } from '../../store/messages';
 import type { IBuyer, IPlacedOrder } from '../../store/types';
 import type { Say } from '../customize/EditableText';
+import { ORDER_PLACED } from '../../strings/checkout';
 
 export interface IOrderPlacedProps {
   order: IPlacedOrder;
@@ -32,33 +33,33 @@ const OrderPlaced: React.FC<IOrderPlacedProps> = props => {
   return (
     <div className={styles.placed}>
       <div className={styles.tick} aria-hidden="true"><Icon iconName="CheckMark" /></div>
-      <h2 className={styles.title}>Order placed</h2>
+      <h2 className={styles.title}>{ORDER_PLACED.title}</h2>
       {say
         ? <div className={styles.placedMessage}>{say('placedMessage', placed)}</div>
         : placed && <p className={styles.placedMessage}>{placed}</p>}
       <p>
-        Your order number is{' '}
+        {ORDER_PLACED.numberLead}{' '}
         <span className={styles.number}>{order.number}</span>
       </p>
 
       <div className={styles.next}>
-        <h3 className={styles.nextTitle}>What happens next</h3>
-        <p>{pickUp ? 'Pick it up at the office.' : "We'll send it to you."}</p>
+        <h3 className={styles.nextTitle}>{ORDER_PLACED.nextTitle}</h3>
+        <p>{pickUp ? ORDER_PLACED.pickUp : ORDER_PLACED.delivery}</p>
         {say ? <div>{say(howKey, howNote)}</div> : howNote && <p>{howNote}</p>}
         {!pickUp && order.shipTo && (
           <>
-            <p>It&apos;s going to:</p>
+            <p>{ORDER_PLACED.shipTo}</p>
             <p className={styles.shipTo}>{order.shipTo}</p>
           </>
         )}
       </div>
 
-      {emailSent && <p>A confirmation email is on its way to you.</p>}
-      {!emailSent && emailsOn && <p>Your order is saved, but the confirmation email couldn&apos;t be sent.</p>}
+      {emailSent && <p>{ORDER_PLACED.emailSent}</p>}
+      {!emailSent && emailsOn && <p>{ORDER_PLACED.emailFailed}</p>}
 
       <div className={styles.placedActions}>
-        <DefaultButton text="Back to the store" onClick={onBackToStore} />
-        <Link onClick={onMyOrders}>See my orders</Link>
+        <DefaultButton text={ORDER_PLACED.back} onClick={onBackToStore} />
+        <Link onClick={onMyOrders}>{ORDER_PLACED.seeMyOrders}</Link>
       </div>
     </div>
   );

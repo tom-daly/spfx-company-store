@@ -9,6 +9,7 @@
  * page shows it in each owner's own time.
  */
 import { textLines } from './rowValues';
+import { ORDER_HISTORY } from '../strings/orderWords';
 
 export interface IHistoryEntry {
   /** When, as an ISO date in UTC. */
@@ -23,7 +24,7 @@ const SEP = ' | ';
 const tidy = (text: string): string => text.replace(/\s*\|\s*/g, ' / ').replace(/\s*[\r\n]+\s*/g, '; ').trim();
 
 export function historyEntry(who: string, what: string, now: Date = new Date()): IHistoryEntry {
-  return { when: now.toISOString(), who: tidy(who) || 'Someone', what: tidy(what) };
+  return { when: now.toISOString(), who: tidy(who) || ORDER_HISTORY.someone, what: tidy(what) };
 }
 
 export const historyLine = (e: IHistoryEntry): string => [e.when, tidy(e.who), tidy(e.what)].join(SEP);

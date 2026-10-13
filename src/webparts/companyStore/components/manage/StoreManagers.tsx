@@ -9,6 +9,8 @@ import type { ISiteInfo } from '../../setup/problems';
 import { sameLogin } from '../../setup/permissions';
 import { IManager, IPersonFound, addManager, byName, loadManagers, removeManager, searchPeople } from '../../store/managers';
 import { explain } from '../../setup/errors';
+import { COMMON } from '../../strings/common';
+import { STORE_MANAGERS } from '../../strings/manageSettings';
 
 export interface IStoreManagersProps {
   sp: SPFI;
@@ -78,7 +80,7 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
         !people.some(p => sameLogin(p.login, f.login) || (!!p.email && sameLogin(p.email, f.email))));
       return fresh.map((f): IFoundPersona => ({ key: f.login, text: f.name, secondaryText: f.email, person: f }));
     } catch (e) {
-      if (alive.current) setError(`Searching for people didn't work. ${explain(e)}`);
+      if (alive.current) setError(STORE_MANAGERS.searchFailed(explain(e)));
       return [];
     }
   };
@@ -86,7 +88,7 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
   const add = async (person: IPersonFound): Promise<void> => {
     if (load.kind !== 'ready') return;
     refocus.current = true;
-    setSaving(`Adding ${person.name}…`);
+    setSaving(STORE_MANAGERS.adding(person.name));
     setSaid('');
     setError(undefined);
     try {
@@ -95,9 +97,9 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
       setLoad(l => (l.kind === 'ready'
         ? { ...l, people: byName(l.people.filter(p => p.id !== added.id).concat(added)) }
         : l));
-      setSaid(`${added.name} is a store manager now.`);
+      setSaid(STORE_MANAGERS.added(added.name));
     } catch (e) {
-      if (alive.current) setError(`${person.name} couldn't be added. ${explain(e)}`);
+      if (alive.current) setError(STORE_MANAGERS.addFailed(person.name, explain(e)));
     } finally {
       if (alive.current) setSaving(undefined);
     }
@@ -107,16 +109,16 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
     if (load.kind !== 'ready') return;
     // Their button goes with them, so the keyboard goes to the search box.
     refocus.current = true;
-    setSaving(`Removing ${person.name}…`);
+    setSaving(STORE_MANAGERS.removing(person.name));
     setSaid('');
     setError(undefined);
     try {
       await removeManager(sp, load.groupId, person.id);
       if (!alive.current) return;
       setLoad(l => (l.kind === 'ready' ? { ...l, people: l.people.filter(p => p.id !== person.id) } : l));
-      setSaid(`${person.name} isn't a store manager any more.`);
+      setSaid(STORE_MANAGERS.removed(person.name));
     } catch (e) {
-      if (alive.current) setError(`${person.name} couldn't be removed. ${explain(e)}`);
+      if (alive.current) setError(STORE_MANAGERS.removeFailed(person.name, explain(e)));
     } finally {
       if (alive.current) setSaving(undefined);
     }
@@ -124,33 +126,30 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
 
   return (
     <section className={styles.section}>
-      <h3>Store managers</h3>
-      <p className={styles.intro}>
-        Store managers can run the store: add and change products, update stock, handle orders and change these
-        settings. Site owners always can.
-      </p>
+      <h3>{STORE_MANAGERS.title}</h3>
+      <p className={styles.intro}>{STORE_MANAGERS.intro}</p>
 
       {load.kind === 'loading' && (
-        <Spinner size={SpinnerSize.small} label="Loading store managers…" labelPosition="right" />
+        <Spinner size={SpinnerSize.small} label={STORE_MANAGERS.loading} labelPosition="right" />
       )}
 
       {load.kind === 'failed' && (
         <MessageBar
           messageBarType={MessageBarType.error} isMultiline
-          actions={<DefaultButton text="Try again" onClick={() => { read().catch(() => undefined); }} />}
+          actions={<DefaultButton text={COMMON.tryAgain} onClick={() => { read().catch(() => undefined); }} />}
         >
-          The store managers couldn&apos;t be loaded. {load.message}
+          {STORE_MANAGERS.loadFailed(load.message)}
         </MessageBar>
       )}
 
       {load.kind === 'noGroup' && (
-        <MessageBar messageBarType={MessageBarType.info}>Run Fix it to turn on store managers.</MessageBar>
+        <MessageBar messageBarType={MessageBarType.info}>{STORE_MANAGERS.noGroup}</MessageBar>
       )}
 
       {load.kind === 'ready' && (
         <>
           {people.length === 0 ? (
-            <p className={styles.hint}>There aren&apos;t any store managers yet.</p>
+            <p className={styles.hint}>{STORE_MANAGERS.none}</p>
           ) : (
             <ul className={styles.people}>
               {people.map(p => (
@@ -158,7 +157,8 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
                   <Persona text={p.name} secondaryText={p.email} size={PersonaSize.size32} />
                   {canChange && (
                     <IconButton
-                      iconProps={{ iconName: 'Cancel' }} ariaLabel={`Remove ${p.name}`} title={`Remove ${p.name}`}
+                      iconProps={{ iconName: 'Cancel' }} ariaLabel={STORE_MANAGERS.removeLabel(p.name)}
+                      title={STORE_MANAGERS.removeLabel(p.name)}
                       disabled={!!saving} onClick={() => { remove(p).catch(() => undefined); }}
                     />
                   )}
@@ -172,7 +172,7 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
             <div className={styles.addPerson}>
               <NormalPeoplePicker
                 componentRef={picker}
-                label="Add a person"
+                label={STORE_MANAGERS.addLabel}
                 selectedItems={[]}
                 onResolveSuggestions={suggest}
                 onChange={items => {
@@ -182,14 +182,14 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
                 resolveDelay={300}
                 disabled={!!saving}
                 pickerSuggestionsProps={{
-                  suggestionsHeaderText: 'People',
-                  noResultsFoundText: 'No one found',
-                  loadingText: 'Searching…'
+                  suggestionsHeaderText: STORE_MANAGERS.pickerHeader,
+                  noResultsFoundText: STORE_MANAGERS.pickerNoResults,
+                  loadingText: STORE_MANAGERS.pickerSearching
                 }}
               />
             </div>
           ) : (
-            <p className={styles.hint}>Ask a site owner to add or remove store managers.</p>
+            <p className={styles.hint}>{STORE_MANAGERS.askOwner}</p>
           )}
 
           <div className={styles.managersStatus}>
@@ -201,7 +201,7 @@ const StoreManagers: React.FC<IStoreManagersProps> = ({ sp, site }) => {
           {error && (
             <MessageBar
               messageBarType={MessageBarType.error} isMultiline
-              onDismiss={() => setError(undefined)} dismissButtonAriaLabel="Close"
+              onDismiss={() => setError(undefined)} dismissButtonAriaLabel={COMMON.close}
             >
               {error}
             </MessageBar>

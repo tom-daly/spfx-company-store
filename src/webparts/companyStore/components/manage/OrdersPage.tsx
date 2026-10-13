@@ -25,6 +25,8 @@ import OrderEditor from './OrderEditor';
 import StatusDialog from './StatusDialog';
 import { STATUS_OPTIONS } from './statusOptions';
 import { withoutKey } from '../withoutKey';
+import { COMMON } from '../../strings/common';
+import { ORDERS_PAGE, ORDER_COLUMNS, ORDER_DETAIL, ORDER_ROW } from '../../strings/manageOrders';
 
 export interface IOrdersPageProps {
   sp: SPFI;
@@ -80,7 +82,7 @@ const Tracking: React.FC<{ tracking: string }> = ({ tracking }) => {
 const Dot: React.FC = () => (
   <>
     <span className={styles.historyDot} aria-hidden="true"> · </span>
-    <span className={styles.srOnly}>, </span>
+    <span className={styles.srOnly}>{ORDER_DETAIL.historyPause}</span>
   </>
 );
 
@@ -89,8 +91,8 @@ const History: React.FC<{ order: IOrder }> = ({ order }) => {
   const lines = historyNewestFirst(order.history);
   return (
     <section className={styles.history}>
-      <h3 className={styles.label}>History</h3>
-      {lines.length === 0 && <p className={styles.quiet}>Nothing recorded yet.</p>}
+      <h3 className={styles.label}>{ORDER_DETAIL.history}</h3>
+      {lines.length === 0 && <p className={styles.quiet}>{ORDER_DETAIL.historyEmpty}</p>}
       {lines.length > 0 && (
         <ul className={styles.historyList}>
           {lines.map((h, i) => (
@@ -126,15 +128,15 @@ const OrderDetail: React.FC<IOrderDetailProps> = ({ order, currency, itemUrl, ca
   const placed = placedText(order);
 
   let where: JSX.Element;
-  if (order.method === 'Pick up') where = <p className={styles.text}>Collecting at the office.</p>;
+  if (order.method === 'Pick up') where = <p className={styles.text}>{ORDER_DETAIL.collecting}</p>;
   else if (order.shipTo.length) where = <p className={styles.address}>{order.shipTo.join('\n')}</p>;
-  else where = <p className={styles.quiet}>No address was given.</p>;
+  else where = <p className={styles.quiet}>{ORDER_DETAIL.noAddress}</p>;
 
   return (
     <>
       <div className={styles.detailBar}>
         <DefaultButton
-          iconProps={{ iconName: 'Edit' }} text="Edit order" ariaLabel={`Edit order ${order.number}`}
+          iconProps={{ iconName: 'Edit' }} text={ORDER_DETAIL.edit} ariaLabel={ORDER_DETAIL.editLabel(order.number)}
           disabled={!canEdit} onClick={onEdit}
         />
         {/* Always here, so a screen reader is listening when the words arrive. */}
@@ -145,31 +147,31 @@ const OrderDetail: React.FC<IOrderDetailProps> = ({ order, currency, itemUrl, ca
 
       <div className={styles.detail}>
         <section>
-          <h3 className={styles.label}>Where it goes</h3>
+          <h3 className={styles.label}>{ORDER_DETAIL.where}</h3>
           {where}
-          {order.phone && <p className={styles.quiet}>Phone: {order.phone}</p>}
+          {order.phone && <p className={styles.quiet}>{ORDER_DETAIL.phone(order.phone)}</p>}
           {order.readyBy && (
             <>
-              <h3 className={`${styles.label} ${styles.fact}`}>Ready by</h3>
+              <h3 className={`${styles.label} ${styles.fact}`}>{ORDER_DETAIL.readyBy}</h3>
               <p className={styles.text}>{dayText(order.readyBy)}</p>
             </>
           )}
           {order.tracking && (
             <>
-              <h3 className={`${styles.label} ${styles.fact}`}>Tracking</h3>
+              <h3 className={`${styles.label} ${styles.fact}`}>{ORDER_DETAIL.tracking}</h3>
               <p className={styles.text}><Tracking tracking={order.tracking} /></p>
             </>
           )}
           {order.pickedUpOn && (
             <>
-              <h3 className={`${styles.label} ${styles.fact}`}>Picked up on</h3>
+              <h3 className={`${styles.label} ${styles.fact}`}>{ORDER_DETAIL.pickedUpOn}</h3>
               <p className={styles.text}>{dayText(order.pickedUpOn)}</p>
             </>
           )}
         </section>
 
         <section>
-          <h3 className={styles.label}>Who</h3>
+          <h3 className={styles.label}>{ORDER_DETAIL.who}</h3>
           <p className={styles.text}>{order.who}</p>
           {order.email && (
             <p className={styles.text}><Link href={`mailto:${order.email}`}>{order.email}</Link></p>
@@ -178,12 +180,12 @@ const OrderDetail: React.FC<IOrderDetailProps> = ({ order, currency, itemUrl, ca
         </section>
 
         <section>
-          <h3 className={styles.label}>What they ordered</h3>
+          <h3 className={styles.label}>{ORDER_DETAIL.items}</h3>
           {order.lines.length > 0 && (
             <ul className={styles.items}>
               {order.lines.map((line, i) => (
                 <li key={i}>
-                  <span>{line.qty} × {lineName(line)}</span>
+                  <span>{ORDER_DETAIL.line(line.qty, lineName(line))}</span>
                   <span className={styles.amount}>{money(lineTotal(line))}</span>
                 </li>
               ))}
@@ -196,23 +198,23 @@ const OrderDetail: React.FC<IOrderDetailProps> = ({ order, currency, itemUrl, ca
             </ul>
           )}
           {order.lines.length === 0 && order.itemLines.length === 0 && (
-            <p className={styles.quiet}>Nothing is listed.</p>
+            <p className={styles.quiet}>{ORDER_DETAIL.noItems}</p>
           )}
-          <p className={styles.total}><span>Total</span><span>{money(order.total)}</span></p>
+          <p className={styles.total}><span>{COMMON.total}</span><span>{money(order.total)}</span></p>
         </section>
 
         <section>
-          <h3 className={styles.label}>Their note</h3>
+          <h3 className={styles.label}>{ORDER_DETAIL.note}</h3>
           {order.note
             ? <p className={styles.orderNote}>{order.note}</p>
-            : <p className={styles.quiet}>No note.</p>}
+            : <p className={styles.quiet}>{ORDER_DETAIL.noNote}</p>}
         </section>
       </div>
 
       <History order={order} />
 
       <p className={styles.detailFoot}>
-        <Link href={itemUrl} target="_blank" rel="noopener noreferrer">Open in the orders list</Link>
+        <Link href={itemUrl} target="_blank" rel="noopener noreferrer">{ORDER_DETAIL.openInList}</Link>
       </p>
     </>
   );
@@ -253,7 +255,7 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
       setKept([]);
       setProblems({});
     } catch (e) {
-      setLoadError(`The orders couldn't be loaded. Try Refresh in a moment. (${explain(e)})`);
+      setLoadError(ORDERS_PAGE.loadFailed(explain(e)));
     } finally {
       setLoading(false);
     }
@@ -280,7 +282,7 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
       return saved;
     } catch (e) {
       setOrders(list => list && withStatus(list, order.id, order.status));
-      const text = `${order.number} couldn't be changed to ${status}, so it's still ${order.status}. (${explain(e)})`;
+      const text = ORDER_ROW.statusFailed(order.number, status, order.status, explain(e));
       setProblems(map => ({ ...map, [order.id]: { text } }));
       return undefined;
     }
@@ -335,7 +337,7 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
     keep(saved.id);
     setProblems(map => withoutKey(map, saved.id));
     setOpenId(saved.id);
-    setSavedNote({ id: saved.id, text: `${saved.number} saved.` });
+    setSavedNote({ id: saved.id, text: ORDERS_PAGE.saved(saved.number) });
   };
 
   const toggle = (id: number): void => setOpenId(current => (current === id ? undefined : id));
@@ -365,7 +367,7 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
               className={styles.caret}
               aria-expanded={open}
               aria-controls={open ? detailId : undefined}
-              aria-label={`Details of ${o.number}`}
+              aria-label={ORDER_ROW.detailsLabel(o.number)}
               onClick={e => {
                 e.stopPropagation();
                 toggle(o.id);
@@ -397,20 +399,20 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
               <Dropdown
                 // Ready for pick-up stands out: it's waiting on the person now, not on the owners.
                 className={o.status === 'Ready for pick-up' ? `${styles.status} ${styles.ready}` : styles.status}
-                ariaLabel={`Status of ${o.number}`}
+                ariaLabel={ORDER_ROW.statusLabel(o.number)}
                 selectedKey={o.status}
                 options={STATUS_OPTIONS[o.method]}
                 // Also not while the list reloads, or the fresh copy could land on top of the change.
                 disabled={isSaving || loading}
                 onChange={(_, option) => { if (option) pickStatus(o, option.key as OrderStatus); }}
               />
-              {isSaving && <Spinner size={SpinnerSize.xSmall} ariaLabel={`Saving ${o.number}`} />}
+              {isSaving && <Spinner size={SpinnerSize.xSmall} ariaLabel={ORDER_ROW.savingLabel(o.number)} />}
             </div>
           </td>
           <td>
             {!o.emailSent && (
-              <span className={styles.warn} title="The order email didn't go out. You may want to let them know.">
-                No
+              <span className={styles.warn} title={ORDER_ROW.emailNotSentTip}>
+                {ORDER_ROW.emailNotSent}
               </span>
             )}
           </td>
@@ -421,7 +423,11 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
               <MessageBar
                 messageBarType={problem.warning ? MessageBarType.warning : MessageBarType.error}
                 isMultiline
-                actions={<DefaultButton text="OK" onClick={() => setProblems(map => withoutKey(map, o.id))} />}
+                actions={(
+                  <DefaultButton
+                    text={ORDER_ROW.dismissProblem} onClick={() => setProblems(map => withoutKey(map, o.id))}
+                  />
+                )}
               >
                 {problem.text}
               </MessageBar>
@@ -449,13 +455,15 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
     <div className={styles.orders}>
       <div className={styles.head}>
         <div>
-          <h2 className={styles.title}>Orders</h2>
+          <h2 className={styles.title}>{ORDERS_PAGE.title}</h2>
           {orders && summary && <p className={styles.summary}>{summary}</p>}
         </div>
         <div className={styles.headActions}>
-          {loading && orders && <Spinner size={SpinnerSize.small} label="Loading…" labelPosition="right" />}
+          {loading && orders && (
+            <Spinner size={SpinnerSize.small} label={ORDERS_PAGE.loadingAgain} labelPosition="right" />
+          )}
           <DefaultButton
-            text="Refresh"
+            text={ORDERS_PAGE.refresh}
             // Not while a status is saving: the fresh list could undo what is on screen.
             disabled={loading || saving.length > 0}
             onClick={() => { load().catch(() => undefined); }}
@@ -469,12 +477,14 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
         </MessageBar>
       )}
 
-      {!orders && loading && <Spinner className={styles.loading} size={SpinnerSize.medium} label="Loading orders…" />}
+      {!orders && loading && (
+        <Spinner className={styles.loading} size={SpinnerSize.medium} label={ORDERS_PAGE.loading} />
+      )}
 
       {orders && (
         <>
           <div className={styles.bar}>
-            <div className={styles.filters} role="group" aria-label="Show orders">
+            <div className={styles.filters} role="group" aria-label={ORDERS_PAGE.filtersLabel}>
               {FILTERS.map(f => (
                 <button
                   key={f.key}
@@ -492,8 +502,8 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
               <Icon iconName="Search" className={styles.searchMark} aria-hidden="true" />
               <input
                 type="search"
-                placeholder="Search orders"
-                aria-label="Search by order number, name or item"
+                placeholder={ORDERS_PAGE.searchPlaceholder}
+                aria-label={ORDERS_PAGE.searchLabel}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
               />
@@ -502,8 +512,9 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
 
           {orders.length >= MOST_ORDERS && (
             <p className={styles.note}>
-              Showing the newest {MOST_ORDERS} orders. Older ones are in the{' '}
-              <Link href={listUrl} target="_blank" rel="noopener noreferrer">orders list</Link>.
+              {ORDERS_PAGE.olderBeforeLink(MOST_ORDERS)}
+              <Link href={listUrl} target="_blank" rel="noopener noreferrer">{ORDERS_PAGE.olderLink}</Link>
+              {ORDERS_PAGE.olderAfterLink}
             </p>
           )}
 
@@ -512,17 +523,17 @@ const OrdersPage: React.FC<IOrdersPageProps> = ({ sp, ids, site, settings, getGr
           {visible.length > 0 && (
             <div className={styles.tableWrap}>
               <table className={styles.table}>
-                <caption className={styles.srOnly}>Orders, newest first. Open an order to see its details.</caption>
+                <caption className={styles.srOnly}>{ORDERS_PAGE.tableCaption}</caption>
                 <thead>
                   <tr>
-                    <th scope="col">Order</th>
-                    <th scope="col">Who</th>
-                    <th scope="col">Placed</th>
-                    <th scope="col" className={styles.num}>Items</th>
-                    <th scope="col">How</th>
-                    <th scope="col" className={styles.num}>Total</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Email sent</th>
+                    <th scope="col">{ORDER_COLUMNS.order}</th>
+                    <th scope="col">{ORDER_COLUMNS.who}</th>
+                    <th scope="col">{ORDER_COLUMNS.placed}</th>
+                    <th scope="col" className={styles.num}>{ORDER_COLUMNS.items}</th>
+                    <th scope="col">{ORDER_COLUMNS.how}</th>
+                    <th scope="col" className={styles.num}>{COMMON.total}</th>
+                    <th scope="col">{ORDER_COLUMNS.status}</th>
+                    <th scope="col">{ORDER_COLUMNS.emailSent}</th>
                   </tr>
                 </thead>
                 <tbody>{visible.map(renderOrder)}</tbody>

@@ -1,5 +1,6 @@
 import { Currency, DEFAULT_SETTINGS, IStoreSettings, formatMoney, isSubject } from './settings';
 import type { IBuyer } from './types';
+import { FILL_IN_WORDS } from '../strings/settingsWords';
 
 /*
  * The words owners can change, edited on a preview of the real screens. Each
@@ -10,7 +11,10 @@ import type { IBuyer } from './types';
 export type MessageKey = 'placedMessage' | 'pickUpNote' | 'deliveryNote' | 'emailSubject' | 'emailMessage' |
   'confirmedSubject' | 'confirmedMessage' | 'readySubject' | 'readyMessage' | 'shippedSubject' | 'shippedMessage';
 
-export const FILL_INS: string[] = ['{first name}', '{name}', '{order}', '{total}'];
+/* The fill-ins as owners see them listed. The pattern in fillIn below has to know each one. */
+export const FILL_INS: string[] = [
+  FILL_IN_WORDS.firstName, FILL_IN_WORDS.name, FILL_IN_WORDS.order, FILL_IN_WORDS.total
+];
 
 export interface IFillIns {
   firstName: string;
@@ -24,7 +28,7 @@ export const displayName = (buyer: IBuyer): string => (buyer.name || '').trim() 
 
 export function fillInsFor(order: { number: string; total: number }, buyer: IBuyer, currency: Currency): IFillIns {
   // A signed-in person always has one or the other; "someone" only covers the impossible.
-  const name = displayName(buyer) || 'someone';
+  const name = displayName(buyer) || FILL_IN_WORDS.nobody;
   return {
     name,
     firstName: name.split(/\s+/)[0],

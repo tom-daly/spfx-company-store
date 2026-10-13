@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Icon } from '@fluentui/react';
 import styles from './Shop.module.scss';
+import { STEPPER } from '../../strings/shop';
 
 export interface IStepperProps {
   value: number;
@@ -21,14 +22,14 @@ const Stepper: React.FC<IStepperProps> = ({ value, min, max, label, onChange, di
   return (
     <div className={styles.stepper} role="group" aria-label={label}>
       <button
-        type="button" aria-label="One fewer" aria-disabled={!canLess}
+        type="button" aria-label={STEPPER.less} aria-disabled={!canLess}
         onClick={() => { if (canLess) onChange(value - 1); }}
       >
         <Icon iconName="Remove" aria-hidden="true" />
       </button>
       <span className={styles.stepperValue} aria-live="polite" aria-atomic="true">{value}</span>
       <button
-        type="button" aria-label="One more" aria-disabled={!canMore}
+        type="button" aria-label={STEPPER.more} aria-disabled={!canMore}
         onClick={() => { if (canMore) onChange(value + 1); }}
       >
         <Icon iconName="Add" aria-hidden="true" />

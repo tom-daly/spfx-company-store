@@ -12,6 +12,7 @@
  */
 import { allCouriers, getTracking } from 'ts-tracking-number';
 import type { TrackingNumber } from 'ts-tracking-number';
+import { TRACKING_WORDS } from '../strings/orderWords';
 
 export interface ITracking {
   /** What to show: the number or address as typed, or only the tracking number of a label scanned in full. */
@@ -104,7 +105,8 @@ export function trackingFor(tracking: string): ITracking | undefined {
 }
 
 /** "USPS tracking" when the carrier is known, "Tracking" otherwise. */
-export const trackingLabel = (t: ITracking): string => (t.carrier ? `${t.carrier} tracking` : 'Tracking');
+export const trackingLabel = (t: ITracking): string =>
+  (t.carrier ? TRACKING_WORDS.carrierLabel(t.carrier) : TRACKING_WORDS.label);
 
 /**
  * Under the box tracking is typed in: what the store took it for, so a wrong
@@ -113,7 +115,7 @@ export const trackingLabel = (t: ITracking): string => (t.carrier ? `${t.carrier
 export function trackingHint(tracking: string): string {
   const t = trackingFor(tracking);
   if (!t) return '';
-  if (t.carrier) return `Links to the ${t.carrier} tracking page. Wrong carrier? Paste their tracking link instead.`;
-  if (t.href) return 'Shows as a link.';
-  return "Not a number the store recognises, so it shows as text. Paste the carrier's tracking link to make it a link.";
+  if (t.carrier) return TRACKING_WORDS.hintCarrier(t.carrier);
+  if (t.href) return TRACKING_WORDS.hintLink;
+  return TRACKING_WORDS.hintPlain;
 }

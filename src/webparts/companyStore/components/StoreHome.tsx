@@ -17,13 +17,15 @@ import Shop from './shop/Shop';
 import MyOrders from './shop/MyOrders';
 import CustomizeMessages from './customize/CustomizeMessages';
 import ManageNav, { ManageTab } from './manage/ManageNav';
-import ProductsPage, { ADDING_PRODUCTS } from './manage/ProductsPage';
+import ProductsPage from './manage/ProductsPage';
 import ProductEditor from './manage/ProductEditor';
 import OrdersPage from './manage/OrdersPage';
 import SettingsPage from './manage/SettingsPage';
 import UnsavedBar from './UnsavedBar';
 import type { INotice } from './notice';
 import { scrollToTopIfPast } from './scrollToTopIfPast';
+import { COMMON } from '../strings/common';
+import { HOME } from '../strings/home';
 
 export interface IStoreHomeProps {
   sp: SPFI;
@@ -174,14 +176,14 @@ const StoreHome: React.FC<IStoreHomeProps> = ({ sp, site, getGraph, ids, canRun,
     if (count === 0 && canRun) {
       return (
         <div className={styles.nextStep}>
-          <h2>Next: add your products</h2>
-          <p>{ADDING_PRODUCTS} Both are on the Products &amp; stock page.</p>
+          <h2>{HOME.nextTitle}</h2>
+          <p>{HOME.nextBody}</p>
           <p>
-            Prices are in {currencyInfo(s.currency).label}.{' '}
-            <Link onClick={() => go({ page: 'settings' })}>Change that in Settings</Link> before you add any.
+            {HOME.pricesIn(currencyInfo(s.currency).label)}{' '}
+            <Link onClick={() => go({ page: 'settings' })}>{HOME.changeInSettings}</Link>{' '}{HOME.beforeYouAdd}
           </p>
           <div className={styles.actions}>
-            <PrimaryButton text="Go to Products & stock" onClick={() => go({ page: 'products' })} />
+            <PrimaryButton text={HOME.goToProducts} onClick={() => go({ page: 'products' })} />
           </div>
         </div>
       );
@@ -189,10 +191,10 @@ const StoreHome: React.FC<IStoreHomeProps> = ({ sp, site, getGraph, ids, canRun,
     if (count === 0) {
       return (
         <div className={styles.notice}>
-          <h2>Nothing in the store yet</h2>
-          <p>Check back soon.</p>
+          <h2>{HOME.emptyTitle}</h2>
+          <p>{HOME.checkBackSoon}</p>
           {/* Anything they ordered before can still be followed. */}
-          <div className={styles.go}><Link onClick={toMyOrders}>See my orders</Link></div>
+          <div className={styles.go}><Link onClick={toMyOrders}>{HOME.seeMyOrders}</Link></div>
         </div>
       );
     }
@@ -236,14 +238,14 @@ const StoreHome: React.FC<IStoreHomeProps> = ({ sp, site, getGraph, ids, canRun,
           onSaved={(name, added) => {
             productsChanged();
             toProducts();
-            setMessage({ type: MessageBarType.success, text: added ? `${name} added.` : `${name} saved.` });
+            setMessage({ type: MessageBarType.success, text: added ? HOME.productAdded(name) : HOME.productSaved(name) });
           }}
           onCancel={toProducts}
           onPartlySaved={productsChanged}
           onDeleted={name => {
             productsChanged();
             toProducts();
-            setMessage({ type: MessageBarType.success, text: `${name} deleted.` });
+            setMessage({ type: MessageBarType.success, text: HOME.productDeleted(name) });
           }}
         />
       )}
@@ -266,7 +268,7 @@ const StoreHome: React.FC<IStoreHomeProps> = ({ sp, site, getGraph, ids, canRun,
           onSaved={saved => {
             setSettings(saved);
             show(view.back, false);
-            setMessage({ type: MessageBarType.success, text: 'Messages saved.' });
+            setMessage({ type: MessageBarType.success, text: HOME.messagesSaved });
           }}
         />
       )}
@@ -279,7 +281,7 @@ const StoreHome: React.FC<IStoreHomeProps> = ({ sp, site, getGraph, ids, canRun,
 
       {site.isOwner && needsIT.length > 0 && (
         <MessageBar messageBarType={MessageBarType.warning} isMultiline>
-          <strong>Needs IT.</strong> Ask a site collection administrator to open this page and fix:
+          <strong>{HOME.needsItLead}</strong>{' '}{HOME.needsItAsk}
           <ul>{needsIT.map((p, i) => <li key={i}>{p.text}</li>)}</ul>
         </MessageBar>
       )}
@@ -307,7 +309,7 @@ const StoreHome: React.FC<IStoreHomeProps> = ({ sp, site, getGraph, ids, canRun,
         {!settings && failed && (
           <div className={styles.actions}>
             <DefaultButton
-              text="Try again"
+              text={COMMON.tryAgain}
               onClick={() => {
                 setMessage(undefined);
                 load().catch(() => undefined);

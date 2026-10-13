@@ -15,8 +15,8 @@ import {
 } from '../../store/productForm';
 import { Combo, MAX_OPTIONS, checkOptions } from '../../store/variants';
 import { Currency, currencySymbol, formatMoney } from '../../store/settings';
-import { countText } from '../../strings/plural';
-import { PHOTOS } from '../../strings/common';
+import { COMMON } from '../../strings/common';
+import { PRODUCT_EDITOR, PRODUCT_PHOTOS } from '../../strings/manageProducts';
 import { explain } from '../../setup/errors';
 import StockEditor, { CellChange } from './StockGrid';
 import { ConfirmDelete } from './ProductsPage';
@@ -136,11 +136,11 @@ const PhotoTile: React.FC<IPhotoTileProps> = ({ photos, previews, of, open, onAd
     return (
       <label
         className={css(styles.tile, styles.tileEmpty, drop.over && styles.tileOver)}
-        title={`Add photos of ${of}`} {...drop.handlers}
+        title={PRODUCT_PHOTOS.addOf(of)} {...drop.handlers}
       >
         <Icon iconName="Add" aria-hidden="true" />
         <input
-          type="file" accept="image/*" multiple className={styles.fileInput} aria-label={`Add photos of ${of}`}
+          type="file" accept="image/*" multiple className={styles.fileInput} aria-label={PRODUCT_PHOTOS.addOf(of)}
           onChange={pickedFiles(onAdd)}
         />
       </label>
@@ -148,13 +148,12 @@ const PhotoTile: React.FC<IPhotoTileProps> = ({ photos, previews, of, open, onAd
   }
   const first = photos[0];
   const src = first.url || previews[first.key];
-  const many = countText(photos.length, PHOTOS);
-  const verb = open ? 'Hide' : 'Show';
+  const label = open ? PRODUCT_PHOTOS.tileHideLabel : PRODUCT_PHOTOS.tileShowLabel;
   return (
     <button
       type="button" className={css(styles.tile, open && styles.tileOpen, drop.over && styles.tileOver)}
-      aria-expanded={open} title={`${verb} the photos of ${of}`}
-      aria-label={`${many} of ${of}. ${verb} them.`} onClick={onToggle} {...drop.handlers}
+      aria-expanded={open} title={open ? PRODUCT_PHOTOS.hideOf(of) : PRODUCT_PHOTOS.showOf(of)}
+      aria-label={label(photos.length, of)} onClick={onToggle} {...drop.handlers}
     >
       {src && <img className={styles.tileImg} src={src} alt="" />}
       {photos.length > 1 && <span className={styles.tileCount} aria-hidden="true">{photos.length}</span>}
@@ -177,7 +176,7 @@ const PhotoStrip: React.FC<IPhotoStripProps> = ({ photos, previews, of, big, onA
   const drop = useDropZone(onAdd);
   const last = photos.length - 1;
   // A choice's photos say whose they are; the product's own are the only ones in their section.
-  const called = (i: number): string => (big ? `photo ${i + 1}` : `photo ${i + 1} of ${of}`);
+  const whose = big ? undefined : of;
   const arrow = (i: number, to: number, icon: string, label: string): JSX.Element => (
     <button
       type="button" className={styles.move} title={label} aria-label={label}
@@ -188,37 +187,41 @@ const PhotoStrip: React.FC<IPhotoStripProps> = ({ photos, previews, of, big, onA
   );
   return (
     <ul
-      className={css(styles.pics, !big && styles.small)} aria-label={big ? 'Photos' : `Photos of ${of}`}
-      {...drop.handlers}
+      className={css(styles.pics, !big && styles.small)}
+      aria-label={big ? PRODUCT_PHOTOS.label : PRODUCT_PHOTOS.labelOf(of)} {...drop.handlers}
     >
       {photos.map((p, i) => {
         const src = p.url || previews[p.key];
-        const alt = `${big && i === 0 ? 'Cover photo' : `Photo ${i + 1}`} of ${of}`;
+        const alt = big && i === 0 ? PRODUCT_PHOTOS.coverAlt(of) : PRODUCT_PHOTOS.photoAlt(i + 1, of);
         return (
           <li key={p.key} className={styles.pic}>
             <span className={styles.frame}>
               {src ? <img className={styles.shot} src={src} alt={alt} /> : <span className={styles.shot} />}
               <button
-                type="button" className={styles.picRemove} title={`Remove ${called(i)}`}
-                aria-label={`Remove ${called(i)}`} onClick={() => onRemove(p)}
+                type="button" className={styles.picRemove} title={PRODUCT_PHOTOS.remove(i + 1, whose)}
+                aria-label={PRODUCT_PHOTOS.remove(i + 1, whose)} onClick={() => onRemove(p)}
               >
                 <Icon iconName="Cancel" aria-hidden="true" />
               </button>
             </span>
             {(big || last > 0) && (
               <span className={styles.picBar}>
-                {i > 0 ? arrow(i, i - 1, 'ChevronLeft', `Move ${called(i)} earlier`) : <span className={styles.moveGap} />}
+                {i > 0
+                  ? arrow(i, i - 1, 'ChevronLeft', PRODUCT_PHOTOS.moveEarlier(i + 1, whose))
+                  : <span className={styles.moveGap} />}
                 {big && (i === 0
-                  ? <span className={styles.cover}>Cover</span>
+                  ? <span className={styles.cover}>{PRODUCT_PHOTOS.cover}</span>
                   : (
                     <button
-                      type="button" className={styles.makeCover} aria-label={`Make ${called(i)} the cover`}
+                      type="button" className={styles.makeCover} aria-label={PRODUCT_PHOTOS.makeCoverLabel(i + 1)}
                       onClick={() => onChange(list => makeCover(list, i))}
                     >
-                      Make cover
+                      {PRODUCT_PHOTOS.makeCover}
                     </button>
                   ))}
-                {i < last ? arrow(i, i + 1, 'ChevronRight', `Move ${called(i)} later`) : <span className={styles.moveGap} />}
+                {i < last
+                  ? arrow(i, i + 1, 'ChevronRight', PRODUCT_PHOTOS.moveLater(i + 1, whose))
+                  : <span className={styles.moveGap} />}
               </span>
             )}
           </li>
@@ -227,9 +230,9 @@ const PhotoStrip: React.FC<IPhotoStripProps> = ({ photos, previews, of, big, onA
       <li className={styles.pic}>
         <label className={css(styles.drop, drop.over && styles.dropOver)}>
           <Icon iconName="Add" className={styles.plus} aria-hidden="true" />
-          <span>Add photos</span>
+          <span>{PRODUCT_PHOTOS.add}</span>
           <input
-            type="file" accept="image/*" multiple className={styles.fileInput} aria-label={`Add photos of ${of}`}
+            type="file" accept="image/*" multiple className={styles.fileInput} aria-label={PRODUCT_PHOTOS.addOf(of)}
             onChange={pickedFiles(onAdd)}
           />
         </label>
@@ -301,7 +304,7 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
         setHeading(draft.name);
       } catch (e) {
         if (!current) return;
-        setProblem({ text: `The product didn't open. ${explain(e)}`, at: 'top' });
+        setProblem({ text: PRODUCT_EDITOR.openFailed(explain(e)), at: 'top' });
         setLoadFailed(true);
       } finally {
         if (current) setLoading(false);
@@ -468,14 +471,14 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
 
   const remove = async (): Promise<void> => {
     if (editing === undefined) return;
-    const name = heading || form.name.trim() || 'The product';
+    const name = heading || form.name.trim() || PRODUCT_EDITOR.fallbackName;
     setDeleting(true);
     setProblem(undefined);
     try {
       await deleteProduct(sp, ids, editing);
       onDeleted(name);
     } catch (e) {
-      if (alive.current) setProblem({ text: `${name} wasn't deleted. ${explain(e)}`, at: 'top' });
+      if (alive.current) setProblem({ text: PRODUCT_EDITOR.deleteFailed(name, explain(e)), at: 'top' });
     } finally {
       if (alive.current) setDeleting(false);
     }
@@ -491,8 +494,10 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
   const optionsProblem = checkOptions(typedOptions(form));
   const usualPrice = readPrice(form.price);
   const usual = usualPrice === undefined ? '' : formatMoney(usualPrice, currency);
-  const productName = form.name.trim() || 'the product';
-  const title = editing === undefined ? 'Add a product' : heading ? `Edit ${heading}` : 'Edit product';
+  const productName = form.name.trim() || PRODUCT_EDITOR.fallbackNameInline;
+  const title = editing === undefined
+    ? PRODUCT_EDITOR.titleAdd
+    : heading ? PRODUCT_EDITOR.titleEdit(heading) : PRODUCT_EDITOR.titleEditPlain;
 
   const problemAt = (at: Where): JSX.Element | undefined => (problem && problem.at === at ? (
     <MessageBar messageBarType={MessageBarType.error} isMultiline>{problem.text}</MessageBar>
@@ -500,16 +505,16 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
 
   const saveButtons = (at: Where): JSX.Element => (
     <>
-      <PrimaryButton text="Save" disabled={!canSave} onClick={() => { save(at).catch(() => undefined); }} />
-      <DefaultButton text="Cancel" disabled={busy} onClick={onCancel} />
-      {saving === at && <Spinner size={SpinnerSize.small} label="Saving…" labelPosition="right" />}
+      <PrimaryButton text={COMMON.save} disabled={!canSave} onClick={() => { save(at).catch(() => undefined); }} />
+      <DefaultButton text={COMMON.cancel} disabled={busy} onClick={onCancel} />
+      {saving === at && <Spinner size={SpinnerSize.small} label={COMMON.saving} labelPosition="right" />}
     </>
   );
 
   return (
     <div className={styles.editor} onDragOver={refuseDrop} onDrop={refuseDrop}>
       <button type="button" className={styles.back} disabled={busy} onClick={onCancel}>
-        <BackArrow />Products &amp; stock
+        <BackArrow />{PRODUCT_EDITOR.back}
       </button>
 
       <div className={styles.topBar}>
@@ -517,7 +522,7 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
         <div className={styles.actions}>
           {editing !== undefined && !loadFailed && (
             <ConfirmDelete
-              text="Delete product" keepText="Keep it" large busy={deleting}
+              text={PRODUCT_EDITOR.delete} keepText={PRODUCT_EDITOR.keep} large busy={deleting}
               disabled={saving !== undefined || loading}
               onDelete={() => { remove().catch(() => undefined); }}
             />
@@ -528,55 +533,57 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
 
       {problemAt('top')}
 
-      {loading && <Spinner className={styles.loading} size={SpinnerSize.medium} label="Opening the product…" />}
+      {loading && <Spinner className={styles.loading} size={SpinnerSize.medium} label={PRODUCT_EDITOR.opening} />}
 
       {!loading && !loadFailed && (
         <div className={styles.form}>
           <div className={styles.twoUp}>
             <section className={css(styles.section, styles.main)}>
-              <h3 className={styles.heading}>Details</h3>
-              <TextField label="Name" required value={form.name} onChange={set('name')} placeholder="Reef crew tee" />
+              <h3 className={styles.heading}>{PRODUCT_EDITOR.details}</h3>
               <TextField
-                label="Short description" value={form.shortDescription} onChange={set('shortDescription')}
-                description="One line, shown on the product card."
+                label={PRODUCT_EDITOR.name} required value={form.name} onChange={set('name')}
+                placeholder={PRODUCT_EDITOR.namePlaceholder}
               />
               <TextField
-                label="Full description" multiline rows={4}
+                label={PRODUCT_EDITOR.shortDescription} value={form.shortDescription} onChange={set('shortDescription')}
+                description={PRODUCT_EDITOR.shortDescriptionHint}
+              />
+              <TextField
+                label={PRODUCT_EDITOR.longDescription} multiline rows={4}
                 value={form.longDescription} onChange={set('longDescription')}
               />
               <TextField
-                label="Details" multiline rows={3} value={form.details} onChange={set('details')}
-                description="One per line, like  Fabric: organic cotton"
+                label={PRODUCT_EDITOR.detailsField} multiline rows={3} value={form.details} onChange={set('details')}
+                description={PRODUCT_EDITOR.detailsHint}
               />
               <div className={styles.pair}>
-                <TextField label="Product code" value={form.productCode} onChange={set('productCode')} />
+                <TextField label={PRODUCT_EDITOR.productCode} value={form.productCode} onChange={set('productCode')} />
                 <TextField
-                  label="Search words" value={form.searchWords} onChange={set('searchWords')}
-                  description="Words people might search for that are not in the name, separated by commas."
+                  label={PRODUCT_EDITOR.searchWords} value={form.searchWords} onChange={set('searchWords')}
+                  description={PRODUCT_EDITOR.searchWordsHint}
                 />
               </div>
               <Toggle
-                label="Active" checked={form.showInStore} onChange={set('showInStore')}
-                onText="Active" offText="Off — saved but not in the store"
+                label={PRODUCT_EDITOR.active} checked={form.showInStore} onChange={set('showInStore')}
+                onText={PRODUCT_EDITOR.activeOn} offText={PRODUCT_EDITOR.activeOff}
               />
             </section>
 
             <div className={styles.side}>
               <section className={styles.section}>
-                <h3 className={styles.heading}>Price</h3>
+                <h3 className={styles.heading}>{COMMON.price}</h3>
                 <TextField
                   className={styles.narrow}
-                  label={hasOptions ? 'Usual price' : 'Price'} value={form.price} onChange={set('price')}
+                  label={hasOptions ? PRODUCT_EDITOR.usualPrice : COMMON.price}
+                  value={form.price} onChange={set('price')}
                   inputMode="decimal" prefix={currencySymbol(currency)}
-                  description={hasOptions
-                    ? 'Used by any combination without its own price below.'
-                    : 'Leave at 0 and it shows as Free.'}
+                  description={hasOptions ? PRODUCT_EDITOR.usualPriceHint : PRODUCT_EDITOR.priceHint}
                 />
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.heading}>Photos</h3>
-                <p className={styles.hint}>The first one is the cover. Drop files in, or choose them.</p>
+                <h3 className={styles.heading}>{PRODUCT_EDITOR.photos}</h3>
+                <p className={styles.hint}>{PRODUCT_EDITOR.photosHint}</p>
                 <PhotoStrip
                   big photos={form.photos} previews={previews} of={productName}
                   onAdd={addPhotos} onChange={changePhotos} onRemove={removePhoto}
@@ -586,35 +593,34 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
           </div>
 
           <section className={styles.section}>
-            <h3 className={styles.heading}>What it varies by</h3>
-            <p className={styles.hint}>
-              Up to three things, like size and colour. Leave this empty for something that comes one way only.
-            </p>
+            <h3 className={styles.heading}>{PRODUCT_EDITOR.options}</h3>
+            <p className={styles.hint}>{PRODUCT_EDITOR.optionsHint}</p>
             {form.options.length > 0 && (
               <div className={styles.options}>
                 {form.options.map((o, oi) => {
-                  const optionName = o.name.trim() || `option ${oi + 1}`;
+                  const optionName = o.name.trim() || PRODUCT_EDITOR.optionFallback(oi + 1);
                   return (
                     <div key={o.key} className={styles.option}>
-                      <span className={styles.optionLabel}>Option {oi + 1}</span>
+                      <span className={styles.optionLabel}>{PRODUCT_EDITOR.option(oi + 1)}</span>
                       <div className={styles.optionBar}>
                         <TextField
-                          className={styles.grow} ariaLabel={`Option ${oi + 1} name`} value={o.name}
+                          className={styles.grow} ariaLabel={PRODUCT_EDITOR.optionNameLabel(oi + 1)} value={o.name}
                           onChange={(_, text) => setForm(f => withOptionName(f, oi, text || ''))}
                         />
                         <button
-                          type="button" className={styles.textButton} aria-label={`Remove ${optionName}`}
+                          type="button" className={styles.textButton}
+                          aria-label={PRODUCT_EDITOR.removeLabel(optionName)}
                           onClick={() => removeOption(oi)}
                         >
-                          Remove
+                          {PRODUCT_EDITOR.remove}
                         </button>
                       </div>
                       <span className={styles.subLabel}>
-                        Choices <span className={styles.subHint}>(type several at once, with commas between)</span>
+                        {PRODUCT_EDITOR.choices} <span className={styles.subHint}>{PRODUCT_EDITOR.choicesHint}</span>
                       </span>
                       <div className={styles.values}>
                         {o.values.map((v, vi) => {
-                          const what = v.value.trim() || `choice ${vi + 1}`;
+                          const what = v.value.trim() || PRODUCT_EDITOR.choiceFallback(vi + 1);
                           const addHere = (chosen: File[]): void => addValuePhotos(oi, vi, chosen);
                           const open = !!openPhotos[v.key] && v.photos.length > 0;
                           return (
@@ -625,7 +631,7 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
                                   onAdd={addHere} onToggle={() => togglePhotos(v.key)}
                                 />
                                 <TextField
-                                  className={styles.grow} ariaLabel={`Choice ${vi + 1} for ${optionName}`}
+                                  className={styles.grow} ariaLabel={PRODUCT_EDITOR.choiceLabel(vi + 1, optionName)}
                                   value={v.value}
                                   onChange={(_, text) => setForm(f => withTypedValue(f, oi, vi, text || '', newKey))}
                                   onPaste={e => {
@@ -638,7 +644,7 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
                                 />
                                 <button
                                   type="button" className={styles.removeValue}
-                                  title={`Remove ${what}`} aria-label={`Remove ${what}`}
+                                  title={PRODUCT_EDITOR.removeLabel(what)} aria-label={PRODUCT_EDITOR.removeLabel(what)}
                                   disabled={o.values.length < 2} onClick={() => removeValue(oi, vi)}
                                 >
                                   <Icon iconName="Cancel" aria-hidden="true" />
@@ -658,7 +664,7 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
                         })}
                       </div>
                       <button type="button" className={styles.addChoice} onClick={() => addValue(oi)}>
-                        + Add a choice
+                        {PRODUCT_EDITOR.addChoice}
                       </button>
                     </div>
                   );
@@ -667,7 +673,7 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
             )}
             {form.options.length < MAX_OPTIONS && (
               <div>
-                <DefaultButton text="+ Add an option" onClick={addOption} />
+                <DefaultButton text={PRODUCT_EDITOR.addOption} onClick={addOption} />
               </div>
             )}
             {optionsProblem && (
@@ -676,14 +682,12 @@ const ProductEditor: React.FC<IProductEditorProps> = ({
           </section>
 
           <section className={styles.section}>
-            <h3 className={styles.heading}>Stock and prices</h3>
+            <h3 className={styles.heading}>{PRODUCT_EDITOR.stock}</h3>
             {choicesToCome && (
-              <p className={styles.hint}>Type the choices above, and a stock box for each one appears here.</p>
+              <p className={styles.hint}>{PRODUCT_EDITOR.stockHint}</p>
             )}
             {table.tooMany !== undefined && (
-              <p className={styles.hint}>
-                That makes {table.tooMany} combinations, too many to list. Take some choices away above.
-              </p>
+              <p className={styles.hint}>{PRODUCT_EDITOR.tooMany(table.tooMany)}</p>
             )}
             {!choicesToCome && (
               <StockEditor

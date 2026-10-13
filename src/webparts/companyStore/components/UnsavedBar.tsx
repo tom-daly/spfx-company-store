@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { DefaultButton, IButton, MessageBar, MessageBarType, PrimaryButton } from '@fluentui/react';
+import { UNSAVED } from '../strings/home';
 
 export interface IUnsavedBarProps {
   /** Throw them away. */
@@ -19,12 +20,12 @@ const UnsavedBar: React.FC<IUnsavedBarProps> = ({ onDiscard, onKeep, keepRef, cl
     isMultiline
     actions={
       <div className={className}>
-        <PrimaryButton text="Throw them away" onClick={onDiscard} />
-        <DefaultButton componentRef={keepRef} text="Keep editing" onClick={onKeep} />
+        <PrimaryButton text={UNSAVED.discard} onClick={onDiscard} />
+        <DefaultButton componentRef={keepRef} text={UNSAVED.keep} onClick={onKeep} />
       </div>
     }
   >
-    Your changes aren&apos;t saved yet.
+    {UNSAVED.message}
   </MessageBar>
 );
 

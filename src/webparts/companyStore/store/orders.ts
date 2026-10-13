@@ -12,10 +12,7 @@ import {
 import { appendHistory, historyEntry } from './orderHistory';
 import { NOT_SENT } from './orderEmailText';
 import { displayName } from './messages';
-
-/* What goes in the order's title until it has a number. Only ever seen if
-   numbering fails and the half-saved row can't be cleaned up either. */
-const NOT_PLACED_YET = 'Not placed yet';
+import { PLACED_HISTORY, PLACING_ORDER } from '../strings/storeData';
 
 /* When someone else keeps changing the same row at the same moment:
    the first go, then up to three more. */
@@ -160,11 +157,8 @@ async function takeLine(list: IList, line: ICartLine): Promise<ITaken> {
     return taken;
   } catch (e) {
     if (isNotEnough(e)) throw e;
-    if (isConflict(e)) {
-      throw new Error(`Lots of people are ordering ${lineName(line)} right now. Please try again in a moment.`);
-    }
-    throw new Error(`We couldn't take ${lineName(line)} off the stock list, so nothing has been ordered. ` +
-      `Please try again. (${explain(e)})`);
+    if (isConflict(e)) throw new Error(PLACING_ORDER.busy(lineName(line)));
+    throw new Error(PLACING_ORDER.stockFailed(lineName(line), explain(e)));
   }
 }
 
@@ -239,7 +233,8 @@ export async function changeOrder(
 async function addOrderRow(
   orders: IList, prefix: string, values: Record<string, unknown>
 ): Promise<{ id: number; number: string }> {
-  const added = await orders.items.add({ Title: NOT_PLACED_YET, ...values });
+  // A stand-in title until it has a number.
+  const added = await orders.items.add({ Title: PLACING_ORDER.notPlacedYet, ...values });
   const id: number = added.Id ?? added.ID;
   const number = orderNumber(prefix, id);
   try {
@@ -288,11 +283,11 @@ export async function placeOrder(
       OrderStatus: 'New',
       ConfirmationSent: false,
       OrderData: orderData(lines, method, address),
-      OrderHistory: appendHistory('', historyEntry(displayName(buyer), 'Order placed'))
+      OrderHistory: appendHistory('', historyEntry(displayName(buyer), PLACED_HISTORY.placed))
     });
   } catch (e) {
     await putBack(stock, taken);
-    throw new Error(`Your order couldn't be saved, so nothing has been ordered. Please try again. (${explain(e)})`);
+    throw new Error(PLACING_ORDER.saveFailed(explain(e)));
   }
 
   if (request.rememberAddress && address) {
@@ -311,7 +306,7 @@ export async function placeOrder(
 /** Ticks "Email sent" on the order once the email has gone, and says so in its history. */
 export async function markEmailSent(sp: SPFI, ids: ListIds, orderId: number, buyer: IBuyer): Promise<void> {
   await changeOrder(listOf(sp, ids, 'orders'), orderId, displayName(buyer), () => ({
-    what: 'Confirmation email sent',
+    what: PLACED_HISTORY.emailSent,
     values: { ConfirmationSent: true }
   }));
 }
@@ -325,6 +320,6 @@ export async function noteEmailFailed(
 ): Promise<void> {
   // The reason usually starts by saying it couldn't be sent, which the line already says.
   const why = reason.replace(NOT_SENT, '').trim();
-  const what = `The confirmation email couldn't be sent${why ? `: ${why}` : ''}`;
+  const what = PLACED_HISTORY.emailFailed(why);
   await changeOrder(listOf(sp, ids, 'orders'), orderId, displayName(buyer), () => ({ what }));
 }

@@ -16,6 +16,7 @@ import {
 import type { GetGraph } from './orderEmail';
 import { sendStatusEmail } from './statusEmail';
 import type { StatusEmailKind } from './statusEmailText';
+import { SAVING_ORDER } from '../strings/storeData';
 
 /* Plenty for a company store's working orders. Anything older is still in the orders list itself. */
 export const MOST_ORDERS = 500;
@@ -107,8 +108,7 @@ async function moveStock(stock: IList, changes: IQuantityChange[]): Promise<ITak
     } catch (e) {
       await putBack(stock, moved);
       if (isNotEnough(e)) throw e;
-      throw new Error(`The stock for ${lineName(c.line)} couldn't be changed, so the order is as it was. ` +
-        `Please try again. (${explain(e)})`);
+      throw new Error(SAVING_ORDER.stockFailed(lineName(c.line), explain(e)));
     }
   }
   return moved;
@@ -144,7 +144,7 @@ export async function updateOrder(
     history = await changeOrder(orders, order.id, who, () => ({ what, values: orderColumns(order, after) }));
   } catch (e) {
     await putBack(stock, moved);
-    throw new Error(`The changes couldn't be saved, so the order is as it was. Please try again. (${explain(e)})`);
+    throw new Error(SAVING_ORDER.saveFailed(explain(e)));
   }
   return { ...after, history: parseHistory(history) };
 }

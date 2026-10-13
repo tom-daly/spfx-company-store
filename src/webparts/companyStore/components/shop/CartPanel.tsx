@@ -8,6 +8,8 @@ import { lineName } from '../../store/orderText';
 import { itemCountText } from '../../store/ordersView';
 import Photo from './Photo';
 import Stepper from './Stepper';
+import { COMMON } from '../../strings/common';
+import { CART } from '../../strings/shop';
 
 export interface ICartPanelProps {
   isOpen: boolean;
@@ -38,7 +40,7 @@ const CartPanel: React.FC<ICartPanelProps> = (
   // Our own close button, styled to sit with the cart's heading.
   const navigation = (): JSX.Element => (
     <div className={styles.panelNav}>
-      <button type="button" className={styles.closeButton} aria-label="Close cart" title="Close" onClick={onDismiss}>
+      <button type="button" className={styles.closeButton} aria-label={CART.close} title={COMMON.close} onClick={onDismiss}>
         <Icon iconName="Cancel" aria-hidden="true" />
       </button>
     </div>
@@ -50,13 +52,13 @@ const CartPanel: React.FC<ICartPanelProps> = (
         <>
           <div className={styles.totals}>
             <div><span>{itemCountText(count)}</span><span>{money(total)}</span></div>
-            <div className={styles.grand}><span>Total</span><span>{money(total)}</span></div>
+            <div className={styles.grand}><span>{COMMON.total}</span><span>{money(total)}</span></div>
           </div>
-          <button type="button" className={css(styles.btn, styles.wide)} onClick={onCheckout}>Checkout</button>
+          <button type="button" className={css(styles.btn, styles.wide)} onClick={onCheckout}>{CART.checkout}</button>
         </>
       )}
       <button type="button" className={css(styles.btn, styles.ghost, styles.wide)} onClick={onDismiss}>
-        Continue shopping
+        {CART.continueShopping}
       </button>
     </div>
   );
@@ -68,7 +70,7 @@ const CartPanel: React.FC<ICartPanelProps> = (
       isLightDismiss
       type={PanelType.custom}
       customWidth="420px"
-      headerText="Your cart"
+      headerText={CART.title}
       onRenderNavigationContent={navigation}
       onRenderFooterContent={footer}
       isFooterAtBottom
@@ -76,20 +78,20 @@ const CartPanel: React.FC<ICartPanelProps> = (
       <div className={styles.cart}>
         {lines.length === 0 ? (
           <div className={styles.empty}>
-            <span className={styles.emptyTitle}>Your cart is empty</span>
-            Pick something from the shop and it will show up here.
+            <span className={styles.emptyTitle}>{CART.emptyTitle}</span>
+            {CART.emptyHint}
           </div>
         ) : (
-          <ul className={styles.lines} aria-label="In your cart">
+          <ul className={styles.lines} aria-label={CART.listLabel}>
             {lines.map(l => (
               <li key={`${l.productId}|${l.variant}`} className={styles.line}>
                 <Photo url={l.photoUrl} alt="" className={styles.lineShot} small />
                 <div className={styles.lineMid}>
                   <span className={styles.lineName}>{l.name}</span>
                   {l.variant !== ONE_SIZE && <span className={styles.lineVariant}>{l.variant}</span>}
-                  <span className={styles.lineMeta}>{l.price === 0 ? 'Free' : `${money(l.price)} each`}</span>
+                  <span className={styles.lineMeta}>{l.price === 0 ? CART.free : CART.each(money(l.price))}</span>
                   <Stepper
-                    value={l.qty} min={1} max={maxFor(l)} label={`Quantity of ${lineName(l)}`}
+                    value={l.qty} min={1} max={maxFor(l)} label={CART.quantityOf(lineName(l))}
                     onChange={q => onQty(l, q, maxFor(l))}
                   />
                 </div>
@@ -97,9 +99,9 @@ const CartPanel: React.FC<ICartPanelProps> = (
                   <span className={styles.linePrice}>{money(l.price * l.qty)}</span>
                   <button
                     type="button" className={css(styles.btn, styles.small, styles.remove)}
-                    aria-label={`Remove ${lineName(l)}`} onClick={() => onRemove(l)}
+                    aria-label={CART.removeLabel(lineName(l))} onClick={() => onRemove(l)}
                   >
-                    Remove
+                    {CART.remove}
                   </button>
                 </div>
               </li>

@@ -8,6 +8,7 @@ import type { IStep } from '../setup/plan';
 import { canRunStore, readStoreState } from '../setup/storeState';
 import { runSetup } from '../setup/installStore';
 import { explain } from '../setup/errors';
+import { STORE_OPENING } from '../strings/setup';
 import SetupScreen from './SetupScreen';
 import SetupProgress from './SetupProgress';
 import StoreHome from './StoreHome';
@@ -63,7 +64,7 @@ const CompanyStore: React.FC<ICompanyStoreProps> = ({ sp, site, getGraph }) => {
       if (steps.every(s => s.state === 'done')) {
         // A moment to see the last tick, then back to the store.
         await new Promise(resolve => setTimeout(resolve, 900));
-        await check('The store is set up. Next, add your products.');
+        await check(STORE_OPENING.setUpNotice);
         return;
       }
       setStatus({ kind: 'installing', steps, finished: true });
@@ -74,18 +75,16 @@ const CompanyStore: React.FC<ICompanyStoreProps> = ({ sp, site, getGraph }) => {
 
   return (
     <section className={styles.companyStore}>
-      {status.kind === 'checking' && <Spinner size={SpinnerSize.large} label="Opening the store…" />}
+      {status.kind === 'checking' && <Spinner size={SpinnerSize.large} label={STORE_OPENING.opening} />}
 
       {status.kind === 'failed' && (
-        <MessageBar messageBarType={MessageBarType.error}>
-          The store could not open. {status.message}
-        </MessageBar>
+        <MessageBar messageBarType={MessageBarType.error}>{STORE_OPENING.couldNotOpen(status.message)}</MessageBar>
       )}
 
       {status.kind === 'notOpen' && (
         <div className={styles.notice}>
-          <h2>The store isn&apos;t open yet</h2>
-          <p>Check back soon.</p>
+          <h2>{STORE_OPENING.notOpenTitle}</h2>
+          <p>{STORE_OPENING.checkBackSoon}</p>
         </div>
       )}
 

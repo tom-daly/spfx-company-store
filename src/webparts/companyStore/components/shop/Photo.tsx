@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { css } from '@fluentui/react';
 import styles from './Shop.module.scss';
+import { PHOTO } from '../../strings/shop';
 
 export interface IPhotoProps {
   url?: string;
@@ -23,10 +24,10 @@ const Photo: React.FC<IPhotoProps> = ({ url, alt, className, small }) => {
       <span
         className={css(className, styles.noPhoto)}
         role={alt ? 'img' : undefined}
-        aria-label={alt ? `${alt}: no photo yet` : undefined}
+        aria-label={alt ? PHOTO.noPhotoOf(alt) : undefined}
         aria-hidden={alt ? undefined : true}
       >
-        {small ? '' : 'No photo yet'}
+        {small ? '' : PHOTO.noPhoto}
       </span>
     );
   }

@@ -3,6 +3,7 @@ import type { ListIds } from '../setup/schema';
 import type { IAddress } from './types';
 import { tidyAddress } from './orderText';
 import { listOf } from './lists';
+import { STORE_DATA } from '../strings/storeData';
 
 /*
  * Each person's delivery address, one row each in the Store addresses list.
@@ -27,7 +28,7 @@ interface IAddressRow {
 
 /* Newest first, so if anyone ever ends up with two rows the latest one wins. */
 async function myRows(sp: SPFI, ids: ListIds, userId: number): Promise<IAddressRow[]> {
-  if (!userId) throw new Error("We couldn't tell who you are, so we can't look up your address.");
+  if (!userId) throw new Error(STORE_DATA.whoAreYou);
   const rows = await listOf(sp, ids, 'addresses').items
     .select('Id', 'Title', 'AddressLine1', 'AddressLine2', 'Postcode', 'City', 'Country', 'Phone')
     .filter(`AuthorId eq ${userId}`)

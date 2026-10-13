@@ -1,5 +1,6 @@
 import * as React from 'react';
 import styles from './Manage.module.scss';
+import { MANAGE_NAV } from '../../strings/manageSettings';
 
 export type ManageTab = 'shop' | 'products' | 'orders' | 'settings' | 'customize';
 
@@ -10,16 +11,16 @@ export interface IManageNavProps {
 }
 
 const TABS: { key: ManageTab; label: string }[] = [
-  { key: 'shop', label: 'Shop' },
-  { key: 'products', label: 'Products & stock' },
-  { key: 'orders', label: 'Orders' },
-  { key: 'settings', label: 'Settings' },
-  { key: 'customize', label: 'Customize' }
+  { key: 'shop', label: MANAGE_NAV.shop },
+  { key: 'products', label: MANAGE_NAV.products },
+  { key: 'orders', label: MANAGE_NAV.orders },
+  { key: 'settings', label: MANAGE_NAV.settings },
+  { key: 'customize', label: MANAGE_NAV.customize }
 ];
 
 /* The row of pages site owners see along the top of the store. Staff never see it. */
 const ManageNav: React.FC<IManageNavProps> = ({ current, onGo }) => (
-  <nav className={styles.nav} aria-label="Run the store">
+  <nav className={styles.nav} aria-label={MANAGE_NAV.label}>
     {TABS.map(t => (
       <button
         key={t.key}

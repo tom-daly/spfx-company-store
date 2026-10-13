@@ -6,6 +6,7 @@ import {
 import { optionsFrom, ownPriceFrom, photosFrom, stockLeft } from './shopText';
 import { cents } from './orderText';
 import { num } from './rowValues';
+import { PRODUCT_CHECKS } from '../strings/productWords';
 
 /*
  * The product form's rules, kept apart from SharePoint so they can be tested:
@@ -494,15 +495,14 @@ export function stockFromForm(form: IProductForm): IStockLine[] | string {
   const stock: IStockLine[] = [];
   for (let i = 0; i < table.rows.length; i++) {
     const row = table.rows[i];
-    const where = table.options.length ? ` for ${row.label}` : '';
     const inStock = readCount(row.inStock);
-    if (inStock === undefined) return `In stock${where} has to be a whole number, 0 or more.`;
+    if (inStock === undefined) {
+      return table.options.length ? PRODUCT_CHECKS.stockNotNumberFor(row.label) : PRODUCT_CHECKS.stockNotNumber;
+    }
     const line: IStockLine = { label: row.label, combo: row.combo, inStock };
     if (table.options.length && row.price.trim()) {
       const own = readPrice(row.price);
-      if (own === undefined) {
-        return `The price${where} has to be a number, 0 or more — or leave it empty to use the usual price.`;
-      }
+      if (own === undefined) return PRODUCT_CHECKS.variantPriceNotNumber(row.label);
       line.ownPrice = own;
     }
     const was = lineOf(form.lines, table.options, row.combo);
@@ -520,9 +520,9 @@ export function stockFromForm(form: IProductForm): IStockLine[] | string {
  * choice can still find it by position; saving tidies them.
  */
 export function draftFromForm(form: IProductForm, id: number | undefined): IProductDraft | string {
-  if (!form.name.trim()) return 'Give the product a name.';
+  if (!form.name.trim()) return PRODUCT_CHECKS.needsName;
   const price = readPrice(form.price);
-  if (price === undefined) return 'The price has to be a number, 0 or more.';
+  if (price === undefined) return PRODUCT_CHECKS.priceNotNumber;
   const options = typedOptions(form);
   const problem = checkOptions(options);
   if (problem) return problem;

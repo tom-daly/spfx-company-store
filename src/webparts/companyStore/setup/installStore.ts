@@ -2,18 +2,15 @@ import type { SPFI } from '../sp';
 import type { IList } from '@pnp/sp/lists';
 import type { IView } from '@pnp/sp/views';
 import { AddFieldOptions } from '@pnp/sp/fields';
-import { IListDef, IViewDef, ListIds, MANAGERS_GROUP, PHOTO_FOLDER, listDef } from './schema';
+import { IListDef, IViewDef, ListIds, MANAGERS_DESCRIPTION, MANAGERS_GROUP, PHOTO_FOLDER, listDef } from './schema';
 import { RoleType, RoleTypeValue, hasStaff, lockOutOrder } from './permissions';
 import { ISiteInfo, listIds, managersGroupId } from './problems';
 import { IStep, Unmade, planSetup, skipReason } from './plan';
 import { ensureFolder, findManagersGroup, readStoreState, readAccess } from './storeState';
 import { explain } from './errors';
+import { SETUP_ERRORS } from '../strings/setup';
 
 export type OnSteps = (steps: IStep[]) => void;
-
-/* What the Store managers group says it is for, in SharePoint's own group pages. */
-const MANAGERS_DESCRIPTION = 'People who run the company store: products, stock and orders. ' +
-  'Site owners add people from the store\'s Settings.';
 
 /* The Store managers group, once there is one, for the steps that let it in. */
 interface IGroupRef {
@@ -63,7 +60,7 @@ export async function runSetup(sp: SPFI, site: ISiteInfo, onSteps: OnSteps): Pro
 }
 
 const groupIdOf = (group: IGroupRef): number => {
-  if (group.id === undefined) throw new Error('The Store managers group isn\'t there.');
+  if (group.id === undefined) throw new Error(SETUP_ERRORS.noManagersGroup);
   return group.id;
 };
 
@@ -86,7 +83,7 @@ async function runStep(sp: SPFI, site: ISiteInfo, step: IStep, ids: ListIds, gro
   }
 
   const id = ids[def.key];
-  if (!id) throw new Error(`${def.title} isn't there.`);
+  if (!id) throw new Error(SETUP_ERRORS.listGone(def.title));
   const list = sp.web.lists.getById(id);
 
   switch (step.kind) {
@@ -103,10 +100,10 @@ async function runStep(sp: SPFI, site: ISiteInfo, step: IStep, ids: ListIds, gro
               (f.inDefaultView ? AddFieldOptions.AddFieldToDefaultView : AddFieldOptions.DefaultValue)
           });
         } catch (e) {
-          failed.push(`${f.title} (${explain(e)})`);
+          failed.push(SETUP_ERRORS.columnFailed(f.title, explain(e)));
         }
       }
-      if (failed.length) throw new Error(`Couldn't add ${failed.join('; ')}`);
+      if (failed.length) throw new Error(SETUP_ERRORS.columnsNotAdded(failed));
       return;
     }
     case 'addChoices': {
@@ -198,7 +195,7 @@ async function lockOut(sp: SPFI, list: IList, site: ISiteInfo): Promise<void> {
   // Never lock the list until staff are definitely in, or nobody but IT could reach it.
   const now = await readAccess(list);
   if (!now || !hasStaff(now, site.everyoneLogin)) {
-    throw new Error('Staff are not on the list yet, so it was left open to site owners for now.');
+    throw new Error(SETUP_ERRORS.staffNotInYet);
   }
   const groups = await sp.web.currentUser.groups.select('Id')();
   const order = lockOutOrder(now, site.everyoneLogin, site.currentUserId, groups.map(g => g.Id));
@@ -218,7 +215,7 @@ async function makeManagersGroup(sp: SPFI, site: ISiteInfo): Promise<number> {
 
   const owners = await sp.web.associatedOwnerGroup.select('Id')();
   if (!owners || typeof owners.Id !== 'number') {
-    throw new Error('This site has no Owners group to look after the Store managers group.');
+    throw new Error(SETUP_ERRORS.noOwnersGroup);
   }
   const made = await sp.web.siteGroups.add({
     Title: MANAGERS_GROUP,

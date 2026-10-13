@@ -14,6 +14,8 @@ import { trackingFor, trackingLabel } from '../../store/tracking';
 import BackArrow from '../BackArrow';
 import LoadFailed from '../LoadFailed';
 import { useLoad } from '../useLoad';
+import { COMMON } from '../../strings/common';
+import { MY_ORDERS, ORDER_METHOD } from '../../strings/shop';
 
 export interface IMyOrdersProps {
   sp: SPFI;
@@ -35,7 +37,7 @@ interface IOrderPartProps {
 const Steps: React.FC<{ order: IOrder }> = ({ order }) => {
   const finished = isDone(order.status);
   return (
-    <ol className={styles.progress} aria-label="Progress">
+    <ol className={styles.progress} aria-label={MY_ORDERS.progress}>
       {orderSteps(order).map(step => {
         const now = step.state === 'current';
         // A finished order is at its last step, and that step is done too.
@@ -51,7 +53,7 @@ const Steps: React.FC<{ order: IOrder }> = ({ order }) => {
               {ticked && <Icon iconName="CheckMark" />}
             </span>
             <span className={styles.stepName}>{step.label}</span>
-            {said && <span className={styles.srOnly}>, {said}</span>}
+            {said && <span className={styles.srOnly}>{MY_ORDERS.stepState(said)}</span>}
           </li>
         );
       })}
@@ -68,7 +70,7 @@ const WhereItsAt: React.FC<IOrderPartProps> = ({ order, settings, site }) => {
       <p className={styles.whereAtText}>{whereItsAt(order)}</p>
       {tracking && (
         <p className={styles.whereAtMore}>
-          {trackingLabel(tracking)}:{' '}
+          {MY_ORDERS.trackingLead(trackingLabel(tracking))}{' '}
           {tracking.href
             ? <a href={tracking.href} target="_blank" rel="noopener noreferrer">{tracking.text}</a>
             : tracking.text}
@@ -86,10 +88,10 @@ const OrderCard: React.FC<IOrderPartProps> = ({ order, settings, site }) => {
     <article className={styles.orderCard}>
       <div className={styles.orderHead}>
         <div>
-          <h3 className={styles.orderNumber}><span className={styles.srOnly}>Order </span>{order.number}</h3>
+          <h3 className={styles.orderNumber}><span className={styles.srOnly}>{MY_ORDERS.orderSr}</span>{order.number}</h3>
           {placed && <p className={styles.orderPlaced}>{placed}</p>}
         </div>
-        <span className={css(styles.pill, styles.pillOut)}>{order.method}</span>
+        <span className={css(styles.pill, styles.pillOut)}>{ORDER_METHOD[order.method]}</span>
       </div>
 
       <Steps order={order} />
@@ -97,19 +99,19 @@ const OrderCard: React.FC<IOrderPartProps> = ({ order, settings, site }) => {
 
       <div className={styles.orderInfo}>
         <section>
-          <h4 className={styles.infoLabel}>What you ordered</h4>
+          <h4 className={styles.infoLabel}>{MY_ORDERS.itemsTitle}</h4>
           {items.length > 0
             ? <ul className={styles.orderItems}>{items.map((text, i) => <li key={i}>{text}</li>)}</ul>
-            : <p className={styles.quiet}>Nothing is listed.</p>}
-          <p className={styles.orderTotal}><span>Total</span><span>{formatMoney(order.total, settings.currency)}</span></p>
+            : <p className={styles.quiet}>{MY_ORDERS.noItems}</p>}
+          <p className={styles.orderTotal}><span>{COMMON.total}</span><span>{formatMoney(order.total, settings.currency)}</span></p>
         </section>
 
         {order.method === 'Delivery' && (
           <section>
-            <h4 className={styles.infoLabel}>Going to</h4>
+            <h4 className={styles.infoLabel}>{MY_ORDERS.shipToTitle}</h4>
             {order.shipTo.length > 0
               ? <p className={styles.shipTo}>{order.shipTo.join('\n')}</p>
-              : <p className={styles.quiet}>No address was given.</p>}
+              : <p className={styles.quiet}>{MY_ORDERS.noAddress}</p>}
           </section>
         )}
       </div>
@@ -127,35 +129,35 @@ const MyOrders: React.FC<IMyOrdersProps> = ({ sp, ids, site, settings, onShop })
 
   return (
     <div className={css(styles.shop, styles.myOrders)}>
-      <button type="button" className={styles.back} onClick={onShop}><BackArrow />Back to the shop</button>
-      <h2 className={styles.pageTitle}>My orders</h2>
-      <p className={styles.pageIntro}>Everything you&apos;ve ordered from the store, newest first.</p>
+      <button type="button" className={styles.back} onClick={onShop}><BackArrow />{MY_ORDERS.back}</button>
+      <h2 className={styles.pageTitle}>{MY_ORDERS.title}</h2>
+      <p className={styles.pageIntro}>{MY_ORDERS.intro}</p>
 
-      {!orders && !loadError && <Spinner className={styles.loading} size={SpinnerSize.medium} label="Loading your orders…" />}
+      {!orders && !loadError && <Spinner className={styles.loading} size={SpinnerSize.medium} label={MY_ORDERS.loading} />}
 
       {loadError && (
         <LoadFailed
-          lead="Your orders couldn't be loaded." error={loadError} onRetry={() => { reload().catch(() => undefined); }}
+          lead={MY_ORDERS.loadFailed} error={loadError} onRetry={() => { reload().catch(() => undefined); }}
         />
       )}
 
       {orders && orders.length === 0 && (
         <div className={styles.empty}>
-          <span className={styles.emptyTitle}>You haven&apos;t ordered anything yet.</span>
+          <span className={styles.emptyTitle}>{MY_ORDERS.emptyTitle}</span>
           <div className={styles.emptyAction}>
-            <button type="button" className={styles.btn} onClick={onShop}>Go to the shop</button>
+            <button type="button" className={styles.btn} onClick={onShop}>{MY_ORDERS.goShop}</button>
           </div>
         </div>
       )}
 
       {orders && orders.length > 0 && (
-        <ul className={styles.orderList} aria-label="Your orders">
+        <ul className={styles.orderList} aria-label={MY_ORDERS.listLabel}>
           {orders.map(o => <li key={o.id}><OrderCard order={o} settings={settings} site={site} /></li>)}
         </ul>
       )}
 
       {orders && orders.length >= MOST_MINE && (
-        <p className={styles.quiet}>Showing your newest {MOST_MINE} orders.</p>
+        <p className={styles.quiet}>{MY_ORDERS.showingNewest(MOST_MINE)}</p>
       )}
     </div>
   );

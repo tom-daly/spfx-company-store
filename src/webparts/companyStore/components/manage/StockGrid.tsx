@@ -4,8 +4,8 @@ import styles from './StockGrid.module.scss';
 import type { IOption } from '../../store/types';
 import type { Combo } from '../../store/variants';
 import { IFormLine, IFormRow, IStockTable, readCount, totalStock } from '../../store/productForm';
-import { countText } from '../../strings/plural';
-import { COMBINATIONS } from '../../strings/common';
+import { COMMON } from '../../strings/common';
+import { STOCK_GRID } from '../../strings/manageProducts';
 
 /** What changed in one combination's boxes. */
 export type CellChange = Partial<Pick<IFormLine, 'inStock' | 'price'>>;
@@ -24,11 +24,11 @@ interface IPriceCellProps extends ICellProps {
   usual: string;
 }
 
-const boxName = (what: string, row: IFormRow, of?: string): string => `${what}, ${of ? `${of}, ` : ''}${row.label}`;
+const boxName = (what: string, row: IFormRow, of?: string): string => STOCK_GRID.boxLabel(what, row.label, of);
 
 const StockCell: React.FC<ICellProps> = ({ row, of, onChange }) => (
   <input
-    className={styles.cell} inputMode="numeric" value={row.inStock} aria-label={boxName('In stock', row, of)}
+    className={styles.cell} inputMode="numeric" value={row.inStock} aria-label={boxName(STOCK_GRID.inStock, row, of)}
     onChange={e => onChange(row.combo, { inStock: e.target.value })}
   />
 );
@@ -36,7 +36,7 @@ const StockCell: React.FC<ICellProps> = ({ row, of, onChange }) => (
 const PriceCell: React.FC<IPriceCellProps> = ({ row, usual, of, onChange }) => (
   <input
     className={styles.cell} inputMode="decimal" value={row.price} placeholder={usual}
-    aria-label={boxName('Price (if different)', row, of)}
+    aria-label={boxName(STOCK_GRID.priceIfDifferent, row, of)}
     onChange={e => onChange(row.combo, { price: e.target.value })}
   />
 );
@@ -74,7 +74,7 @@ const Sheet: React.FC<ISheetProps> = ({ down, across, rows, usual, of, onChange,
       <table className={styles.matrix}>
         <thead>
           <tr>
-            <th scope="col">{down ? `${down.name} / ${across.name}` : across.name}</th>
+            <th scope="col">{down ? STOCK_GRID.corner(down.name, across.name) : across.name}</th>
             {prices && down && <td />}
             {across.values.map(b => <th scope="col" key={b.value} className={styles.across}>{b.value}</th>)}
           </tr>
@@ -87,17 +87,17 @@ const Sheet: React.FC<ISheetProps> = ({ down, across, rows, usual, of, onChange,
               <React.Fragment key={key}>
                 <tr className={styles.groupStart}>
                   {name}
-                  <th scope="row" className={styles.what}>In stock</th>
+                  <th scope="row" className={styles.what}>{STOCK_GRID.inStock}</th>
                   {cells(a, stock)}
                 </tr>
                 <tr>
-                  <th scope="row" className={styles.what}>Price</th>
+                  <th scope="row" className={styles.what}>{COMMON.price}</th>
                   {cells(a, price)}
                 </tr>
               </React.Fragment>
             ) : (
               <tr key={key} className={styles.plainRow}>
-                {name || <th scope="row" className={styles.what}>In stock</th>}
+                {name || <th scope="row" className={styles.what}>{STOCK_GRID.inStock}</th>}
                 {cells(a, stock)}
               </tr>
             );
@@ -137,7 +137,8 @@ const StockSheets: React.FC<IStockSheetsProps> = ({ table, usual, of, onChange, 
         return (
           <div key={v.value} className={styles.sheet}>
             <h4 className={styles.sheetTitle}>
-              {third.name}: {v.value} <span className={styles.sheetTotal}>{total} in stock</span>
+              {STOCK_GRID.sheetTitle(third.name, v.value)}{' '}
+              <span className={styles.sheetTotal}>{STOCK_GRID.sheetTotal(total)}</span>
             </h4>
             {grid(rows)}
           </div>
@@ -178,8 +179,8 @@ const StockEditor: React.FC<IStockEditorProps> = ({ table, usual, prices, onPric
     const row = table.rows[0];
     return (
       <TextField
-        className={styles.narrow} label="In stock" inputMode="numeric" value={row.inStock}
-        ariaLabel={of ? `In stock, ${of}` : undefined}
+        className={styles.narrow} label={STOCK_GRID.inStock} inputMode="numeric" value={row.inStock}
+        ariaLabel={of ? STOCK_GRID.inStockOf(of) : undefined}
         onChange={(_, text) => onChange(row.combo, { inStock: text || '' })}
       />
     );
@@ -189,24 +190,22 @@ const StockEditor: React.FC<IStockEditorProps> = ({ table, usual, prices, onPric
   const fill = readCount(fillWith);
   return (
     <div className={styles.stock}>
-      <p className={styles.hint}>
-        {`${countText(count, COMBINATIONS)}. `}Set how many of each you have.
-      </p>
+      <p className={styles.hint}>{STOCK_GRID.intro(count)}</p>
       <div className={styles.tools}>
         <Checkbox
-          label="Some combinations cost more or less than the usual price"
-          ariaLabel={of ? `Some combinations of ${of} cost more or less than the usual price` : undefined}
+          label={STOCK_GRID.ownPrices}
+          ariaLabel={of ? STOCK_GRID.ownPricesOf(of) : undefined}
           checked={prices} onChange={(_, on) => onPrices(!!on)}
         />
         {count > 1 && (
           <div className={styles.fill}>
             <TextField
-              className={styles.fillBox} label="Same number in every box" inputMode="numeric"
-              ariaLabel={of ? `Same number in every box for ${of}` : undefined}
+              className={styles.fillBox} label={STOCK_GRID.fillLabel} inputMode="numeric"
+              ariaLabel={of ? STOCK_GRID.fillLabelOf(of) : undefined}
               value={fillWith} onChange={(_, text) => setFillWith(text || '')}
             />
             <DefaultButton
-              text="Fill" disabled={fill === undefined}
+              text={STOCK_GRID.fill} disabled={fill === undefined}
               onClick={() => { if (fill !== undefined) onFill(fill); }}
             />
           </div>
@@ -214,8 +213,8 @@ const StockEditor: React.FC<IStockEditorProps> = ({ table, usual, prices, onPric
       </div>
       <StockSheets table={table} usual={usual} of={of} onChange={onChange} prices={prices} />
       <p className={styles.total}>
-        <strong>Total in stock: {totalStock(table)}.</strong>{' '}
-        A combination with nothing left stays on the page but can&apos;t be ordered.
+        <strong>{STOCK_GRID.total(totalStock(table))}</strong>{' '}
+        {STOCK_GRID.soldOutNote}
       </p>
     </div>
   );

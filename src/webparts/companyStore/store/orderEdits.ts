@@ -16,6 +16,9 @@ import type { IOrder, OrderStatus } from './ordersView';
 import { dayText, isIsoDate } from './dates';
 import { EMAIL_NOT_SENT, NOT_SENT } from './orderEmailText';
 import type { StatusEmailKind } from './statusEmailText';
+import {
+  EDIT_ADDRESS_PARTS, ORDER_EDIT_CHECKS, ORDER_HISTORY, ORDER_WARNINGS
+} from '../strings/orderWords';
 
 /** The store team's changes to an order, as the edit form sends them. */
 export interface IOrderEdit {
@@ -110,20 +113,14 @@ export function stockMoves(before: ICartLine[], after: ICartLine[]): IQuantityCh
 /** Said when there isn't enough stock to raise a line to `wanted`. */
 export function tooFewMessage(line: ICartLine, wanted: number, left: number): string {
   const name = lineName(line);
-  if (left <= 0) return `${name} is sold out, so it can't go up to ${wanted}.`;
-  return `Only ${left} ${name} left, so it can't go up to ${wanted}.`;
+  if (left <= 0) return ORDER_EDIT_CHECKS.soldOut(name, wanted);
+  return ORDER_EDIT_CHECKS.onlyLeft(left, name, wanted);
 }
 
 /* ------------------------------------------------------------- checking */
 
 /* Worded for the store team, who are filling in someone else's address. */
-const ADDRESS_WORDS: IAddressWords = {
-  name: 'the name',
-  line1: 'the first line of the address',
-  postcode: 'the postcode',
-  city: 'the city',
-  country: 'the country'
-};
+const ADDRESS_WORDS: IAddressWords = EDIT_ADDRESS_PARTS;
 
 const isWholeNumber = (n: unknown): boolean =>
   typeof n === 'number' && isFinite(n) && n >= 0 && Math.floor(n) === n;
@@ -133,10 +130,11 @@ export function statusProblem(status: OrderStatus, method: DeliveryMethod): stri
   const fits = statusesFor(method);
   if (fits.indexOf(status) >= 0) return undefined;
   // "New, Packed or Shipped".
-  if (STATUSES.indexOf(status) < 0) return `Choose a status: ${inWords(fits, 'or')}.`;
-  const delivery = method === 'Delivery';
-  return `${status} is only for ${delivery ? 'pick-ups' : 'deliveries'}. ` +
-    `For ${delivery ? 'delivery' : 'pick-up'}, choose ${inWords(fits, 'or')}.`;
+  const choices = inWords(fits, 'or');
+  if (STATUSES.indexOf(status) < 0) return ORDER_EDIT_CHECKS.chooseStatus(choices);
+  return method === 'Delivery'
+    ? ORDER_EDIT_CHECKS.onlyForPickUps(status, choices)
+    : ORDER_EDIT_CHECKS.onlyForDeliveries(status, choices);
 }
 
 /**
@@ -153,50 +151,43 @@ export function editedStatus(order: IOrder, edit: IOrderEdit): OrderStatus {
 
 /** Why these changes can't be saved, in plain words, or undefined if they can. */
 export function checkEdit(order: IOrder, edit: IOrderEdit): string | undefined {
-  if (edit.method !== 'Pick up' && edit.method !== 'Delivery') return 'Choose pick-up or delivery.';
+  if (edit.method !== 'Pick up' && edit.method !== 'Delivery') return ORDER_EDIT_CHECKS.chooseMethod;
   const wrongStatus = statusProblem(editedStatus(order, edit), edit.method);
   if (wrongStatus) return wrongStatus;
 
   const odd = edit.lines.filter(l => !isWholeNumber(l.qty))[0];
-  if (odd) return `How many ${lineName(odd)} has to be a whole number: 0 or more.`;
+  if (odd) return ORDER_EDIT_CHECKS.wholeNumber(lineName(odd));
 
   if (!order.lines.length) {
     // Without the order data there's no telling which stock lines the items came from.
-    if (edit.lines.some(l => l.qty > 0)) {
-      return "The items on this order can't be changed, because the store can't read exactly what was ordered. " +
-        'Everything else on it can still be changed.';
-    }
+    if (edit.lines.some(l => l.qty > 0)) return ORDER_EDIT_CHECKS.itemsUnreadable;
   } else {
     const ordered = quantities(order.lines);
     const added = edit.lines.filter(l => l.qty > 0 && ordered[keyOf(l)] === undefined)[0];
-    if (added) {
-      return `${lineName(added)} isn't on this order. Only what's already on it can be changed; ` +
-        'anything else needs a new order.';
-    }
-    if (!editedLines(order, edit).length) return 'Leave at least one item on the order.';
+    if (added) return ORDER_EDIT_CHECKS.notOnOrder(lineName(added));
+    if (!editedLines(order, edit).length) return ORDER_EDIT_CHECKS.keepOneItem;
   }
 
   if (edit.method === 'Delivery') {
     const wrongAddress = checkAddress(edit.address, ADDRESS_WORDS);
     if (wrongAddress) return wrongAddress;
   }
+  const pickedUp = editedStatus(order, edit) === 'Picked up';
   return detailsProblem(edit.readyBy, edit.method === 'Delivery' ? edit.tracking : '') ||
-    (editedStatus(order, edit) === 'Picked up' ? dayProblem(edit.pickedUpOn, 'The picked-up day') : undefined);
+    (pickedUp ? dayProblem(edit.pickedUpOn, ORDER_EDIT_CHECKS.pickedUpDay) : undefined);
 }
 
-/* Empty is fine: the day is optional. Anything else has to be a real day like 2026-10-15. */
-function dayProblem(day: string, which: string): string | undefined {
+/* Empty is fine: the day is optional. Anything else has to be a real day like 2026-10-15, or `problem` is said. */
+function dayProblem(day: string, problem: string): string | undefined {
   const d = day.trim();
-  return d && !isIsoDate(d) ? `${which} isn't a real day. Pick it again, or clear it.` : undefined;
+  return d && !isIsoDate(d) ? problem : undefined;
 }
 
 /* The ready-by day and the tracking, from the edit panel or the box the orders table asks with. */
 function detailsProblem(readyBy: string, tracking: string): string | undefined {
-  const wrongDay = dayProblem(readyBy, 'The ready-by day');
+  const wrongDay = dayProblem(readyBy, ORDER_EDIT_CHECKS.readyByDay);
   if (wrongDay) return wrongDay;
-  if (tracking.trim().length > MOST_TRACKING) {
-    return `The tracking number or link is too long. Keep it to ${MOST_TRACKING} characters or fewer.`;
-  }
+  if (tracking.trim().length > MOST_TRACKING) return ORDER_EDIT_CHECKS.trackingTooLong(MOST_TRACKING);
   return undefined;
 }
 
@@ -264,7 +255,7 @@ export function orderColumns(before: IOrder, after: IOrder): Record<string, unkn
 /* ---------------------------------------------------------------- words */
 
 /** "Status changed from New to Packed". */
-export const statusChangeText = (from: string, to: string): string => `Status changed from ${from} to ${to}`;
+export const statusChangeText = (from: string, to: string): string => ORDER_HISTORY.statusChanged(from, to);
 
 /* The parts of the address that go on the parcel. The phone is told apart. */
 const PARCEL: (keyof IAddress)[] = ['name', 'line1', 'line2', 'postcode', 'city', 'country'];
@@ -285,29 +276,31 @@ const phoneBefore = (order: IOrder): string => (order.address ? tidyAddress(orde
 /* "Crew hoodie (M) 2 → 1", "Dive cap taken off". */
 function quantityText(c: IQuantityChange): string {
   const name = lineName(c.line);
-  if (c.to === 0) return `${name} taken off`;
-  if (c.from === 0) return `${name} added (${c.to})`;
-  return `${name} ${c.from} → ${c.to}`;
+  if (c.to === 0) return ORDER_HISTORY.itemTakenOff(name);
+  if (c.from === 0) return ORDER_HISTORY.itemAdded(name, c.to);
+  return ORDER_HISTORY.itemQty(name, c.from, c.to);
 }
 
 function noteText(was: string, now: string): string {
-  if (!was) return 'note added';
-  if (!now) return 'note removed';
-  return 'note changed';
+  if (!was) return ORDER_HISTORY.noteAdded;
+  if (!now) return ORDER_HISTORY.noteRemoved;
+  return ORDER_HISTORY.noteChanged;
 }
 
 /* "ready by changed to Thu 15 Oct 2026", "tracking set to 1Z999AA10123456784", "tracking cleared". */
 function detailTexts(order: IOrder, after: IOrder): string[] {
   const parts: string[] = [];
   if (after.readyBy !== order.readyBy) {
-    parts.push(after.readyBy ? `ready by changed to ${dayText(after.readyBy)}` : 'ready by cleared');
+    parts.push(after.readyBy ? ORDER_HISTORY.readyByChanged(dayText(after.readyBy)) : ORDER_HISTORY.readyByCleared);
   }
   if (after.tracking !== order.tracking) {
-    parts.push(after.tracking ? `tracking set to ${after.tracking}` : 'tracking cleared');
+    parts.push(after.tracking ? ORDER_HISTORY.trackingSet(after.tracking) : ORDER_HISTORY.trackingCleared);
   }
   // Leaving Picked up drops the day as well; the status change already says as much.
   if (after.pickedUpOn !== order.pickedUpOn && after.status === 'Picked up') {
-    parts.push(after.pickedUpOn ? `picked up on changed to ${dayText(after.pickedUpOn)}` : 'picked up on cleared');
+    parts.push(after.pickedUpOn
+      ? ORDER_HISTORY.pickedUpOnChanged(dayText(after.pickedUpOn))
+      : ORDER_HISTORY.pickedUpOnCleared);
   }
   return parts;
 }
@@ -328,22 +321,22 @@ export function describeEdit(order: IOrder, edit: IOrderEdit, currency: Currency
 
   // Going from pick-up to delivery brings an address with it; saying so twice adds nothing.
   if (order.method === 'Delivery' && after.method === 'Delivery') {
-    if (addressMoved(order, after)) parts.push('address changed');
-    else if (phoneBefore(order) !== after.phone) parts.push('phone number changed');
+    if (addressMoved(order, after)) parts.push(ORDER_HISTORY.addressChanged);
+    else if (phoneBefore(order) !== after.phone) parts.push(ORDER_HISTORY.phoneChanged);
   }
   if (after.note !== order.note) parts.push(noteText(order.note, after.note));
-  if (after.method !== order.method) parts.push(`now ${after.method} instead of ${order.method}`);
+  if (after.method !== order.method) parts.push(ORDER_HISTORY.methodChanged(after.method, order.method));
   const details = detailTexts(order, after);
   const total = after.total !== order.total
-    ? [`total ${formatMoney(order.total, currency)} → ${formatMoney(after.total, currency)}`]
+    ? [ORDER_HISTORY.total(formatMoney(order.total, currency), formatMoney(after.total, currency))]
     : [];
 
   const statusChanged = after.status !== order.status;
   const others = parts.concat(total);
   if (!others.length && !details.length) return statusChanged ? statusChangeText(order.status, after.status) : '';
-  if (!others.length && !statusChanged) return capitalised(details.join('; '));
-  const status: string[] = statusChanged ? [`status ${order.status} → ${after.status}`] : [];
-  return `Changed: ${status.concat(parts, details, total).join('; ')}`;
+  if (!others.length && !statusChanged) return capitalised(details.join(ORDER_HISTORY.between));
+  const status: string[] = statusChanged ? [ORDER_HISTORY.status(order.status, after.status)] : [];
+  return ORDER_HISTORY.changed(status.concat(parts, details, total).join(ORDER_HISTORY.between));
 }
 
 /* ------------------------------------------------ moving on from the table */
@@ -396,13 +389,13 @@ export function statusMove(
   let what = statusChangeText(was, status);
   if (status === 'Confirmed' && details.readyBy !== undefined) {
     values.ReadyBy = after.readyBy;
-    if (after.readyBy) what += `, ready by ${dayText(after.readyBy)}`;
-    else if (order.readyBy) what += ', ready by cleared';
+    if (after.readyBy) what = ORDER_HISTORY.statusChangedReadyBy(was, status, dayText(after.readyBy));
+    else if (order.readyBy) what = ORDER_HISTORY.statusChangedReadyByCleared(was, status);
   }
   if (status === 'Shipped' && details.tracking !== undefined) {
     values.Tracking = after.tracking;
-    if (after.tracking) what += `, tracking ${after.tracking}`;
-    else if (order.tracking) what += ', tracking cleared';
+    if (after.tracking) what = ORDER_HISTORY.statusChangedTracking(was, status, after.tracking);
+    else if (order.tracking) what = ORDER_HISTORY.statusChangedTrackingCleared(was, status);
   }
   // Only written when it's picked up, or was: a delivery never has one.
   if (status === 'Picked up' || was === 'Picked up' || order.status === 'Picked up' || order.pickedUpOn) {
@@ -413,14 +406,14 @@ export function statusMove(
 
 /* ----------------------------------------------------- the status emails */
 
-const EMAILED_WORDS: Record<StatusEmailKind, string> = {
-  confirmed: 'order confirmed',
-  ready: 'ready for pick-up',
-  shipped: 'on its way'
+const EMAILED_WORDS: Record<StatusEmailKind, (name: string) => string> = {
+  confirmed: ORDER_HISTORY.emailedConfirmed,
+  ready: ORDER_HISTORY.emailedReady,
+  shipped: ORDER_HISTORY.emailedShipped
 };
 
 /** "Emailed Megan Bowen: order confirmed", for the history once the email has gone. */
-export const emailedText = (name: string, kind: StatusEmailKind): string => `Emailed ${name}: ${EMAILED_WORDS[kind]}`;
+export const emailedText = (name: string, kind: StatusEmailKind): string => EMAILED_WORDS[kind](name);
 
 /* The reason usually starts by saying the email couldn't be sent, which the line around it already says. */
 const reasonOnly = (reason: string): string => reason.replace(NOT_SENT, '').replace(EMAIL_NOT_SENT, '').trim();
@@ -428,12 +421,13 @@ const reasonOnly = (reason: string): string => reason.replace(NOT_SENT, '').repl
 /** "Email to Megan Bowen couldn't be sent: …", for the history when the email didn't go. */
 export function emailFailedText(name: string, reason: string): string {
   const why = reasonOnly(reason);
-  return `Email to ${name} couldn't be sent${why ? `: ${why}` : ''}`;
+  return why ? ORDER_HISTORY.emailFailedBecause(name, why) : ORDER_HISTORY.emailFailed(name);
 }
 
 /** "CS-0042 is Confirmed, but the email to Megan couldn't be sent. …", for the orders table. */
 export function emailWarningText(order: Pick<IOrder, 'number' | 'who' | 'status'>, reason: string): string {
   const why = reasonOnly(reason);
-  return `${order.number} is ${order.status}, but the email to ${firstNameOf(order)} couldn't be sent.` +
-    (why ? ` ${why}` : '');
+  return why
+    ? ORDER_WARNINGS.emailNotSentBecause(order.number, order.status, firstNameOf(order), why)
+    : ORDER_WARNINGS.emailNotSent(order.number, order.status, firstNameOf(order));
 }

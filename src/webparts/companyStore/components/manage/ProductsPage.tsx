@@ -22,8 +22,10 @@ import {
   ProductFilter, combinationsText, filterCounts, filterProducts, nothingText, stockLevel, summaryText, totalLeft,
   variesText
 } from '../../store/productsTable';
-import { countText } from '../../strings/plural';
-import { PRODUCTS } from '../../strings/common';
+import { COMMON } from '../../strings/common';
+import {
+  CONFIRM_DELETE, PRODUCTS_PAGE, PRODUCT_COLUMNS, PRODUCT_FILTERS, PRODUCT_ROW, STOCK_DRAWER
+} from '../../strings/manageProducts';
 import { explain } from '../../setup/errors';
 import Photo from '../shop/Photo';
 import StockEditor, { CellChange } from './StockGrid';
@@ -45,10 +47,6 @@ export interface IProductsPageProps {
 
 let keys = 0;
 const newKey = (): string => `s${++keys}`;
-
-/** How to fill an empty store, said on the shop and here. */
-export const ADDING_PRODUCTS: string = 'Add each thing the store sells, with a photo and how many you have. Or put ' +
-  'in the sample products to see how the store looks — you can delete them later.';
 
 /* ---------------------------------------------------------- delete, twice */
 
@@ -72,7 +70,7 @@ export interface IConfirmDeleteProps {
  * offers a way back; only the second press deletes. Shared with the editor.
  */
 export const ConfirmDelete: React.FC<IConfirmDeleteProps> = ({
-  name, text = 'Delete', keepText = 'Cancel', busy, disabled, large, onDelete
+  name, text = CONFIRM_DELETE.delete, keepText = COMMON.cancel, busy, disabled, large, onDelete
 }) => {
   const [asking, setAsking] = React.useState(false);
   const deleteRef = React.useRef<HTMLButtonElement>(null);
@@ -92,14 +90,14 @@ export const ConfirmDelete: React.FC<IConfirmDeleteProps> = ({
     if (deleteRef.current) deleteRef.current.focus();
   };
 
-  const label = !name ? undefined : asking ? `Really delete ${name}?` : `${text} ${name}`;
+  const label = !name ? undefined : asking ? CONFIRM_DELETE.reallyDeleteLabel(name) : CONFIRM_DELETE.deleteLabel(name);
   return (
     <span className={css(styles.confirm, large && styles.large)}>
       <button
         type="button" ref={deleteRef} className={css(styles.btn, asking ? styles.btnConfirm : styles.btnDanger)}
         disabled={busy || disabled} aria-label={label} onClick={press}
       >
-        {busy ? 'Deleting…' : asking ? 'Really delete?' : text}
+        {busy ? CONFIRM_DELETE.deleting : asking ? CONFIRM_DELETE.reallyDelete : text}
       </button>
       {asking && <button type="button" className={styles.btn} onClick={keep}>{keepText}</button>}
     </span>
@@ -184,7 +182,7 @@ const StockDrawer: React.FC<IStockDrawerProps> = ({ sp, ids, currency, product, 
       // Some numbers may have gone in before the one that failed, so the row is read again either way.
       onSaved();
       if (!alive.current) return;
-      setError(`The stock didn't all save. ${explain(e)} Press Save stock to try again.`);
+      setError(STOCK_DRAWER.saveFailed(explain(e)));
       setSaving(false);
       return;
     }
@@ -193,7 +191,7 @@ const StockDrawer: React.FC<IStockDrawerProps> = ({ sp, ids, currency, product, 
       await load();
       if (alive.current) setSaved(true);
     } catch (e) {
-      if (alive.current) setError(`The stock saved, but it didn't load again to show you. ${explain(e)}`);
+      if (alive.current) setError(STOCK_DRAWER.reloadFailed(explain(e)));
     } finally {
       if (alive.current) setSaving(false);
     }
@@ -202,27 +200,24 @@ const StockDrawer: React.FC<IStockDrawerProps> = ({ sp, ids, currency, product, 
   const table = form ? stockTable(form) : undefined;
 
   return (
-    <div id={id} className={styles.drawer} role="region" aria-label={`Stock of ${product.name}`}>
+    <div id={id} className={styles.drawer} role="region" aria-label={STOCK_DRAWER.label(product.name)}>
       {!form && !loadError && (
-        <Spinner size={SpinnerSize.small} label="Opening the stock…" labelPosition="right" />
+        <Spinner size={SpinnerSize.small} label={STOCK_DRAWER.opening} labelPosition="right" />
       )}
       {loadError && (
         <>
           <MessageBar messageBarType={MessageBarType.error} isMultiline>
-            The stock didn&apos;t open. {loadError}
+            {STOCK_DRAWER.openFailed(loadError)}
           </MessageBar>
           <div className={styles.drawerActions}>
-            <DefaultButton text="Close" onClick={onClose} />
+            <DefaultButton text={COMMON.close} onClick={onClose} />
           </div>
         </>
       )}
       {form && table && (
         <>
           {table.tooMany !== undefined ? (
-            <p className={styles.drawerNote}>
-              {product.name} has {table.tooMany} combinations, too many to list here. Take some choices away in
-              the editor.
-            </p>
+            <p className={styles.drawerNote}>{STOCK_DRAWER.tooMany(product.name, table.tooMany)}</p>
           ) : (
             <StockEditor
               table={table} usual={formatMoney(product.price, currency)} prices={pricesOn || hasOwnPrices(table)}
@@ -233,13 +228,13 @@ const StockDrawer: React.FC<IStockDrawerProps> = ({ sp, ids, currency, product, 
           {error && <MessageBar messageBarType={MessageBarType.error} isMultiline>{error}</MessageBar>}
           <div className={styles.drawerActions}>
             <PrimaryButton
-              text="Save stock" disabled={saving || !changed}
+              text={STOCK_DRAWER.save} disabled={saving || !changed}
               onClick={() => { save().catch(() => undefined); }}
             />
             {/* Cancel leaves what was typed behind: the stock opens with the saved numbers next time. */}
-            <DefaultButton text={changed ? 'Cancel' : 'Close'} disabled={saving} onClick={onClose} />
-            {saving && <Spinner size={SpinnerSize.small} label="Saving…" labelPosition="right" />}
-            <span className={styles.savedNote} role="status">{saved && !changed ? 'Stock saved.' : ''}</span>
+            <DefaultButton text={changed ? COMMON.cancel : COMMON.close} disabled={saving} onClick={onClose} />
+            {saving && <Spinner size={SpinnerSize.small} label={COMMON.saving} labelPosition="right" />}
+            <span className={styles.savedNote} role="status">{saved && !changed ? STOCK_DRAWER.saved : ''}</span>
           </div>
         </>
       )}
@@ -250,10 +245,10 @@ const StockDrawer: React.FC<IStockDrawerProps> = ({ sp, ids, currency, product, 
 /* ---------------------------------------------------------------- the page */
 
 const FILTERS: Array<{ key: ProductFilter; text: string }> = [
-  { key: 'all', text: 'All' },
-  { key: 'low', text: 'Running low' },
-  { key: 'out', text: 'Out of stock' },
-  { key: 'off', text: 'Off' }
+  { key: 'all', text: PRODUCT_FILTERS.all },
+  { key: 'low', text: PRODUCT_FILTERS.low },
+  { key: 'out', text: PRODUCT_FILTERS.out },
+  { key: 'off', text: PRODUCT_FILTERS.off }
 ];
 
 const COLUMNS = 7;
@@ -339,7 +334,8 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
       onChanged();
       if (alive.current) setProducts(list => list && list.map(x => (x.id === p.id ? { ...x, active } : x)));
     } catch (e) {
-      if (alive.current) setRowProblem(p.id, `${p.name} wasn't switched ${active ? 'on' : 'off'}. ${explain(e)}`);
+      const failed = active ? PRODUCTS_PAGE.switchOnFailed : PRODUCTS_PAGE.switchOffFailed;
+      if (alive.current) setRowProblem(p.id, failed(p.name, explain(e)));
     } finally {
       if (alive.current) setSwitching(s => withoutKey(s, p.id));
     }
@@ -354,7 +350,7 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
       await deleteProduct(sp, ids, p.id);
       done = true;
     } catch (e) {
-      if (alive.current) setRowProblem(p.id, `${p.name} wasn't deleted. ${explain(e)}`);
+      if (alive.current) setRowProblem(p.id, PRODUCTS_PAGE.deleteFailed(p.name, explain(e)));
     }
     // Some of its stock may have gone even when the product didn't.
     onChanged();
@@ -363,7 +359,7 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
       // Gone from the table straight away, rather than once the list has loaded again.
       setProducts(list => list && list.filter(x => x.id !== p.id));
       setOpen(o => withoutKey(o, p.id));
-      setMessage({ type: MessageBarType.success, text: `${p.name} deleted.` });
+      setMessage({ type: MessageBarType.success, text: PRODUCTS_PAGE.deleted(p.name) });
     }
     setDeleting(d => withoutKey(d, p.id));
     await load();
@@ -377,11 +373,11 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
       const todo = SAMPLES.filter(s => have.indexOf(s.draft.name) < 0);
       for (let i = 0; i < todo.length; i++) {
         const s = todo[i];
-        setSampleStep(`Adding ${s.draft.name} (${i + 1} of ${todo.length})…`);
+        setSampleStep(PRODUCTS_PAGE.addingSample(s.draft.name, i + 1, todo.length));
         await saveProduct(sp, ids, s.draft, await sampleFiles(s));
       }
-      const added = todo.length === 1 ? 'Added a sample product.' : `Added ${todo.length} sample products.`;
-      setMessage({ type: MessageBarType.success, text: todo.length ? added : 'The sample products are already in.' });
+      const text = todo.length ? PRODUCTS_PAGE.samplesAdded(todo.length) : PRODUCTS_PAGE.samplesAlreadyIn;
+      setMessage({ type: MessageBarType.success, text });
     } catch (e) {
       setMessage({ type: MessageBarType.error, text: explain(e) });
     } finally {
@@ -396,9 +392,9 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
 
   const addButtons = (
     <div className={styles.headActions}>
-      <PrimaryButton text="+ Add product" disabled={busy} onClick={() => onEdit(undefined)} />
+      <PrimaryButton text={PRODUCTS_PAGE.add} disabled={busy} onClick={() => onEdit(undefined)} />
       <DefaultButton
-        text="Add sample products" disabled={busy}
+        text={PRODUCTS_PAGE.addSamples} disabled={busy}
         onClick={() => { addSamples().catch(() => undefined); }}
       />
       {busy && <Spinner size={SpinnerSize.small} label={sampleStep} labelPosition="right" />}
@@ -435,27 +431,28 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
           <td>
             <span className={styles.switch}>
               <Toggle
-                checked={pending ? switching[p.id] : p.active} ariaLabel={`Active, ${p.name}`}
-                onText="On" offText="Off" styles={{ root: { margin: 0 } }}
+                checked={pending ? switching[p.id] : p.active} ariaLabel={PRODUCT_ROW.activeLabel(p.name)}
+                onText={PRODUCT_ROW.on} offText={PRODUCT_ROW.off} styles={{ root: { margin: 0 } }}
                 onChange={(_, on) => { if (!pending && !gone) switchActive(p, !!on).catch(() => undefined); }}
               />
-              {pending && <Spinner size={SpinnerSize.xSmall} ariaLabel={`Saving ${p.name}`} />}
+              {pending && <Spinner size={SpinnerSize.xSmall} ariaLabel={PRODUCT_ROW.savingLabel(p.name)} />}
             </span>
           </td>
           <td>
             <span className={styles.rowActions}>
               <button
                 type="button" id={stockButtonId(p.id)} className={styles.btn} aria-expanded={isOpen}
-                aria-controls={isOpen ? drawerId : undefined} aria-label={`Stock of ${p.name}`}
+                aria-controls={isOpen ? drawerId : undefined} aria-label={PRODUCT_ROW.stockLabel(p.name)}
                 disabled={gone} onClick={() => toggleStock(p.id)}
               >
-                Stock <Icon iconName={isOpen ? 'ChevronUp' : 'ChevronDown'} className={styles.btnIcon} aria-hidden="true" />
+                {PRODUCT_ROW.stock}{' '}
+                <Icon iconName={isOpen ? 'ChevronUp' : 'ChevronDown'} className={styles.btnIcon} aria-hidden="true" />
               </button>
               <button
-                type="button" className={styles.btn} aria-label={`Edit ${p.name}`} disabled={gone}
+                type="button" className={styles.btn} aria-label={PRODUCT_ROW.editLabel(p.name)} disabled={gone}
                 onClick={() => onEdit(p.id)}
               >
-                Edit
+                {PRODUCT_ROW.edit}
               </button>
               <ConfirmDelete name={p.name} busy={gone} onDelete={() => { remove(p).catch(() => undefined); }} />
             </span>
@@ -492,7 +489,7 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
     <div className={styles.page}>
       <div className={styles.head}>
         <div className={styles.headText}>
-          <h2 className={styles.title}>Products &amp; stock</h2>
+          <h2 className={styles.title}>{PRODUCTS_PAGE.title}</h2>
           {has && products && <p className={styles.summary}>{summaryText(products)}</p>}
         </div>
         {has && addButtons}
@@ -502,19 +499,19 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
 
       {loadError && (
         <LoadFailed
-          lead="The products didn't load." error={loadError} retryClassName={styles.retry}
+          lead={PRODUCTS_PAGE.loadFailed} error={loadError} retryClassName={styles.retry}
           onRetry={() => { load().catch(() => undefined); }}
         />
       )}
 
       {!products && !loadError && (
-        <Spinner className={styles.loading} size={SpinnerSize.medium} label="Loading the products…" />
+        <Spinner className={styles.loading} size={SpinnerSize.medium} label={PRODUCTS_PAGE.loading} />
       )}
 
       {products && !has && (
         <div className={styles.empty}>
-          <h3 className={styles.emptyTitle}>No products yet</h3>
-          <p>{ADDING_PRODUCTS}</p>
+          <h3 className={styles.emptyTitle}>{PRODUCTS_PAGE.emptyTitle}</h3>
+          <p>{PRODUCTS_PAGE.howToAdd}</p>
           {addButtons}
         </div>
       )}
@@ -525,11 +522,12 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
             <div className={styles.search}>
               <Icon iconName="Search" className={styles.searchMark} aria-hidden="true" />
               <input
-                type="search" placeholder="Search products" aria-label="Search products" value={query}
+                type="search" placeholder={PRODUCTS_PAGE.searchPlaceholder} aria-label={PRODUCTS_PAGE.searchLabel}
+                value={query}
                 onChange={e => setQuery(e.target.value)}
               />
             </div>
-            <div className={styles.filters} role="group" aria-label="Show">
+            <div className={styles.filters} role="group" aria-label={PRODUCTS_PAGE.filtersLabel}>
               {FILTERS.map(f => (
                 <button
                   key={f.key} type="button" aria-pressed={filter === f.key}
@@ -543,7 +541,7 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
           </div>
 
           <p className={styles.srOnly} aria-live="polite">
-            {narrowed ? `${countText(shown.length, PRODUCTS)} shown` : ''}
+            {narrowed ? PRODUCTS_PAGE.shownCount(shown.length) : ''}
           </p>
 
           {shown.length === 0 ? (
@@ -553,7 +551,7 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
                 type="button" className={styles.linkButton}
                 onClick={() => { setQuery(''); setFilter('all'); }}
               >
-                Show every product
+                {PRODUCTS_PAGE.showAll}
               </button>
             </div>
           ) : (
@@ -561,13 +559,13 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    <th scope="col"><span className={styles.srOnly}>Photo</span></th>
-                    <th scope="col">Product</th>
-                    <th scope="col" className={styles.num}>Price</th>
-                    <th scope="col">Varies by</th>
-                    <th scope="col">Stock</th>
-                    <th scope="col">Active</th>
-                    <th scope="col"><span className={styles.srOnly}>Change or delete</span></th>
+                    <th scope="col"><span className={styles.srOnly}>{PRODUCT_COLUMNS.photo}</span></th>
+                    <th scope="col">{PRODUCT_COLUMNS.product}</th>
+                    <th scope="col" className={styles.num}>{COMMON.price}</th>
+                    <th scope="col">{PRODUCT_COLUMNS.variesBy}</th>
+                    <th scope="col">{PRODUCT_COLUMNS.stock}</th>
+                    <th scope="col">{PRODUCT_COLUMNS.active}</th>
+                    <th scope="col"><span className={styles.srOnly}>{PRODUCT_COLUMNS.actions}</span></th>
                   </tr>
                 </thead>
                 <tbody>{shown.map(row)}</tbody>

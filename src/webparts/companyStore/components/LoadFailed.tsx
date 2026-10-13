@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { DefaultButton, MessageBar, MessageBarType } from '@fluentui/react';
+import { COMMON } from '../strings/common';
+import { LOAD_FAILED } from '../strings/home';
 
 export interface ILoadFailedProps {
   /** What didn't load, like "The shop could not load." */
@@ -14,9 +16,9 @@ export interface ILoadFailedProps {
 /* Something didn't load: what, why, and a Try again button. */
 const LoadFailed: React.FC<ILoadFailedProps> = ({ lead, error, onRetry, retryClassName }) => (
   <MessageBar messageBarType={MessageBarType.error} isMultiline>
-    {lead} {error}
+    {LOAD_FAILED.message(lead, error)}
     <div className={retryClassName}>
-      <DefaultButton text="Try again" onClick={onRetry} />
+      <DefaultButton text={COMMON.tryAgain} onClick={onRetry} />
     </div>
   </MessageBar>
 );

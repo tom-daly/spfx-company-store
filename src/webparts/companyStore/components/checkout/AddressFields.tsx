@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { TextField } from '@fluentui/react';
 import type { IAddress } from '../../store/types';
+import { ADDRESS } from '../../strings/checkout';
 
 interface IAddressBox {
   key: keyof IAddress;
@@ -15,20 +16,20 @@ interface IAddressBox {
 }
 
 const BOXES: IAddressBox[] = [
-  { key: 'name', label: 'Full name', maxLength: 255, autoComplete: 'name', full: true },
+  { key: 'name', label: ADDRESS.name, maxLength: 255, autoComplete: 'name', full: true },
   {
-    key: 'line1', label: 'Address line 1', placeholder: 'Street and number', maxLength: 255,
+    key: 'line1', label: ADDRESS.line1, placeholder: ADDRESS.line1Placeholder, maxLength: 255,
     autoComplete: 'address-line1', full: true
   },
   {
-    key: 'line2', label: 'Address line 2', placeholder: 'Optional', maxLength: 255,
+    key: 'line2', label: ADDRESS.line2, placeholder: ADDRESS.line2Placeholder, maxLength: 255,
     autoComplete: 'address-line2', full: true
   },
-  { key: 'postcode', label: 'Postcode', maxLength: 20, autoComplete: 'postal-code' },
-  { key: 'city', label: 'City', maxLength: 100, autoComplete: 'address-level2' },
-  { key: 'country', label: 'Country', maxLength: 100, autoComplete: 'country-name' },
+  { key: 'postcode', label: ADDRESS.postcode, maxLength: 20, autoComplete: 'postal-code' },
+  { key: 'city', label: ADDRESS.city, maxLength: 100, autoComplete: 'address-level2' },
+  { key: 'country', label: ADDRESS.country, maxLength: 100, autoComplete: 'country-name' },
   {
-    key: 'phone', label: 'Phone', placeholder: 'For the courier (optional)', maxLength: 40, type: 'tel',
+    key: 'phone', label: ADDRESS.phone, placeholder: ADDRESS.phonePlaceholder, maxLength: 40, type: 'tel',
     autoComplete: 'tel'
   }
 ];
@@ -57,7 +58,7 @@ const AddressFields: React.FC<IAddressFieldsProps> = (
         key={b.key} className={b.full ? fullClassName : undefined} label={b.label} placeholder={b.placeholder}
         type={b.type} autoComplete={autoFill ? b.autoComplete : undefined} maxLength={b.maxLength}
         value={address[b.key]} onChange={(_, value) => onChange(b.key, value || '')}
-        errorMessage={missing.indexOf(b.key) > -1 ? 'Needed for delivery' : undefined} disabled={disabled}
+        errorMessage={missing.indexOf(b.key) > -1 ? ADDRESS.needed : undefined} disabled={disabled}
       />
     ))}
   </div>

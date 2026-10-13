@@ -1,5 +1,6 @@
 import { STORE_LISTS, IFieldDef, IListDef, ListIds, ListKey, keepsOwnRows, listDef } from './schema';
 import { CAN_ADD, CAN_CHANGE_LIST, IAssignment, hasLevel, hasStaff, sameLogin } from './permissions';
+import { SETUP_PROBLEMS } from '../strings/setup';
 
 /* What the store needs to know about the site and the person looking at it. */
 export interface ISiteInfo {
@@ -77,8 +78,6 @@ export interface IProblem {
 /* Item-level permission settings: 2 = only the rows they created. */
 export const OWN_ROWS = 2;
 
-const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
-
 /** Everything about the site that does not match the schema, in plain words. */
 export function findProblems(state: StoreState, everyoneLogin: string): IProblem[] {
   const out: IProblem[] = [];
@@ -86,33 +85,31 @@ export function findProblems(state: StoreState, everyoneLogin: string): IProblem
   for (const def of STORE_LISTS) {
     const s = state[def.key];
     if (!s || !s.exists) {
-      out.push({ list: def.key, text: `${def.title} hasn't been made yet.`, fixable: true });
+      out.push({ list: def.key, text: SETUP_PROBLEMS.listMissing(def.title), fixable: true });
       continue;
     }
     const add = (text: string): void => { out.push({ list: def.key, text, fixable: !!s.canManage }); };
 
     const missing = missingFields(def, s);
-    if (missing.length) {
-      add(`${def.title} is missing ${plural(missing.length, 'column')}: ${missing.map(f => f.title).join(', ')}.`);
-    }
+    if (missing.length) add(SETUP_PROBLEMS.columnsMissing(def.title, missing.map(f => f.title)));
     missingChoices(def, s).forEach(m => {
-      add(`The ${m.title} column in ${def.title} is missing ${plural(m.choices.length, 'choice')}: ${m.choices.join(', ')}.`);
+      add(SETUP_PROBLEMS.choicesMissing(m.title, def.title, m.choices));
     });
     if (s.hidden !== undefined && s.hidden !== def.hidden) {
-      add(def.hidden ? `${def.title} still shows in the site contents.` : `${def.title} is hidden from the site contents.`);
+      add(def.hidden ? SETUP_PROBLEMS.stillShows(def.title) : SETUP_PROBLEMS.hidden(def.title));
     }
-    if (!def.searchable && s.noCrawl === false) add(`${def.title} still shows up in search.`);
-    if (!def.keepVersions && s.versioning) add(`${def.title} keeps old copies of every change.`);
+    if (!def.searchable && s.noCrawl === false) add(SETUP_PROBLEMS.inSearch(def.title));
+    if (!def.keepVersions && s.versioning) add(SETUP_PROBLEMS.keepsVersions(def.title));
 
     if (def.access === 'site') continue;
 
-    if (staffLetIn(s, everyoneLogin) === false) add(`Staff can't add to ${def.title} yet.`);
+    if (staffLetIn(s, everyoneLogin) === false) add(SETUP_PROBLEMS.staffCantAdd(def.title));
 
     if (keepsOwnRows(def) && (s.readSecurity !== OWN_ROWS || s.writeSecurity !== OWN_ROWS)) {
-      add(`Staff could see each other's rows in ${def.title}.`);
+      add(SETUP_PROBLEMS.staffSeeOthers(def.title));
     }
     if (def.access === 'ownRowsOnly' && othersCanOpen(s, everyoneLogin) === true) {
-      add(`Site owners can still open ${def.title}.`);
+      add(SETUP_PROBLEMS.ownersCanOpen(def.title));
     }
   }
 
@@ -120,17 +117,17 @@ export function findProblems(state: StoreState, everyoneLogin: string): IProblem
   if (!state.managers) return out;
   const groupId = managersGroupId(state);
   if (groupId === undefined) {
-    out.push({ text: 'The Store managers group hasn\'t been made yet.', fixable: true });
+    out.push({ text: SETUP_PROBLEMS.noManagersGroup, fixable: true });
     return out;
   }
   for (const def of STORE_LISTS) {
     const s = state[def.key];
     if (def.managers && s && s.exists && managersCanChange(s, groupId) === false) {
-      out.push({ list: def.key, text: `Store managers can't change ${def.title} yet.`, fixable: !!s.canManage });
+      out.push({ list: def.key, text: SETUP_PROBLEMS.managersCantChange(def.title), fixable: !!s.canManage });
     }
   }
   if (managersCanAddPhotos(state.photos, groupId) === false) {
-    out.push({ text: 'Store managers can\'t add product photos yet.', fixable: true });
+    out.push({ text: SETUP_PROBLEMS.managersCantAddPhotos, fixable: true });
   }
   return out;
 }

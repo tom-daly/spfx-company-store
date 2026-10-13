@@ -9,6 +9,7 @@ import { coverFor, parsePhotos } from './gallery';
 import { Currency, formatMoney } from './settings';
 import { inWords } from './orderText';
 import { maybeNum, num, text, textLines } from './rowValues';
+import { PRODUCT_PAGE, PRODUCT_WORDS, STOCK_WORDS } from '../strings/productWords';
 
 /* ---------------------------------------------------------------- photos */
 
@@ -122,9 +123,9 @@ export interface IStockLabel {
 
 export function stockLabel(inStock: number | undefined): IStockLabel {
   const n = stockLeft(inStock);
-  if (n === 0) return { text: 'Out of stock', level: 'out' };
-  if (n <= LOW_STOCK) return { text: `${n} left`, level: 'low' };
-  return { text: `${n} in stock`, level: 'good' };
+  if (n === 0) return { text: STOCK_WORDS.outOfStock, level: 'out' };
+  if (n <= LOW_STOCK) return { text: STOCK_WORDS.left(n), level: 'low' };
+  return { text: STOCK_WORDS.inStock(n), level: 'good' };
 }
 
 /* -------------------------------------------------------- rows to products */
@@ -260,7 +261,7 @@ export function catalogFromRows(
       const photos = photosFrom(r.Photos, r.Photo, origin);
       return {
         id: r.Id,
-        name: text(r.Title) || 'Untitled product',
+        name: text(r.Title) || PRODUCT_WORDS.untitled,
         productCode: text(r.ProductCode),
         shortDescription: text(r.ShortDescription),
         longDescription: text(r.LongDescription),
@@ -285,13 +286,15 @@ export function priceText(p: Pick<IProduct, 'price' | 'variants'>, currency: Cur
   const range = priceRange(p.variants, p.price);
   if (range.min === range.max) return formatMoney(range.min, currency);
   // "From Free" would read oddly.
-  return range.min === 0 ? `Free to ${formatMoney(range.max, currency)}` : `From ${formatMoney(range.min, currency)}`;
+  return range.min === 0
+    ? PRODUCT_WORDS.freeTo(formatMoney(range.max, currency))
+    : PRODUCT_WORDS.from(formatMoney(range.min, currency));
 }
 
 /** "Choose size and colour": the options not picked yet, in the order they are listed. */
 export function chooseText(names: string[]): string {
   const words = names.map(n => n.toLowerCase());
-  return words[words.length - 1] ? `Choose ${inWords(words)}` : 'Choose an option';
+  return words[words.length - 1] ? PRODUCT_PAGE.choose(inWords(words)) : PRODUCT_PAGE.chooseAnOption;
 }
 
 /**
@@ -300,9 +303,9 @@ export function chooseText(names: string[]): string {
  */
 export function pickNote(options: IOption[], variant: IVariant | undefined): string | undefined {
   if (!options.length) return undefined;
-  if (!variant) return 'Crossed out means none left';
+  if (!variant) return PRODUCT_PAGE.crossedOut;
   const n = stockLeft(variant.inStock);
-  return n === 0 ? 'That combination is out of stock' : `${n} left in ${variant.label}`;
+  return n === 0 ? PRODUCT_PAGE.comboOut : PRODUCT_PAGE.leftIn(n, variant.label);
 }
 
 export interface IAddState {
@@ -318,11 +321,11 @@ export interface IAddState {
 
 /** What the Add to cart button says. */
 export function addButtonText(s: IAddState): string {
-  if (s.totalLeft === 0) return 'Out of stock';
+  if (s.totalLeft === 0) return STOCK_WORDS.outOfStock;
   if (s.missing.length) return chooseText(s.missing);
-  if (s.left === 0) return 'Out of stock';
-  if (s.left > s.inCart) return 'Add to cart';
-  return s.left === 1 ? 'The last one is in your cart' : `All ${s.left} are in your cart`;
+  if (s.left === 0) return STOCK_WORDS.outOfStock;
+  if (s.left > s.inCart) return PRODUCT_PAGE.addToCart;
+  return PRODUCT_PAGE.allInCart(s.left);
 }
 
 /* ------------------------------------------------------------------ cart */

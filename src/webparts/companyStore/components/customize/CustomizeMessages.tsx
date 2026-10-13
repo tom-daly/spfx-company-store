@@ -23,6 +23,9 @@ import EditableText, { Say } from './EditableText';
 import MethodChoices, { methodOptions } from '../checkout/MethodChoices';
 import OrderPlaced from '../checkout/OrderPlaced';
 import UnsavedBar from '../UnsavedBar';
+import { COMMON } from '../../strings/common';
+import { CHECKOUT } from '../../strings/checkout';
+import { CUSTOMIZE, EMAIL_HEAD, EMAIL_NAMES, MESSAGE_WORDS } from '../../strings/customize';
 
 export interface ICustomizeMessagesProps {
   sp: SPFI;
@@ -39,10 +42,10 @@ type Tab = 'checkout' | 'placed' | 'email';
 type WhichEmail = 'order' | StatusEmailKind;
 
 const EMAILS: { key: WhichEmail; text: string }[] = [
-  { key: 'order', text: 'New order (to the store team)' },
-  { key: 'confirmed', text: 'Order confirmed' },
-  { key: 'ready', text: 'Ready for pick-up' },
-  { key: 'shipped', text: 'On its way' }
+  { key: 'order', text: EMAIL_NAMES.order },
+  { key: 'confirmed', text: EMAIL_NAMES.confirmed },
+  { key: 'ready', text: EMAIL_NAMES.ready },
+  { key: 'shipped', text: EMAIL_NAMES.shipped }
 ];
 
 const MESSAGE_KEYS: MessageKey[] = [
@@ -50,21 +53,20 @@ const MESSAGE_KEYS: MessageKey[] = [
   'confirmedSubject', 'confirmedMessage', 'readySubject', 'readyMessage', 'shippedSubject', 'shippedMessage'
 ];
 
-const OPENING_EMPTY: string = 'Click to add an opening line';
-
-const ABOUT: Record<MessageKey, { label: string; empty: string; multiline: boolean; fillIns: boolean }> = {
-  placedMessage: { label: 'Order placed message', empty: 'Click to add a thank-you message', multiline: true, fillIns: true },
+/* How each message is edited. What it's called and its empty prompt are in strings/customize. */
+const ABOUT: Record<MessageKey, { multiline: boolean; fillIns: boolean }> = {
+  placedMessage: { multiline: true, fillIns: true },
   // Shown at checkout too, before there is an order to fill anything in from.
-  pickUpNote: { label: 'Pick-up instructions', empty: 'Click to add pick-up instructions', multiline: true, fillIns: false },
-  deliveryNote: { label: 'Delivery note', empty: 'Click to add a delivery note', multiline: true, fillIns: false },
-  emailSubject: { label: 'Email subject', empty: '', multiline: false, fillIns: true },
-  emailMessage: { label: 'Email opening', empty: OPENING_EMPTY, multiline: true, fillIns: true },
-  confirmedSubject: { label: 'Order confirmed email subject', empty: '', multiline: false, fillIns: true },
-  confirmedMessage: { label: 'Order confirmed email opening', empty: OPENING_EMPTY, multiline: true, fillIns: true },
-  readySubject: { label: 'Ready for pick-up email subject', empty: '', multiline: false, fillIns: true },
-  readyMessage: { label: 'Ready for pick-up email opening', empty: OPENING_EMPTY, multiline: true, fillIns: true },
-  shippedSubject: { label: 'On its way email subject', empty: '', multiline: false, fillIns: true },
-  shippedMessage: { label: 'On its way email opening', empty: OPENING_EMPTY, multiline: true, fillIns: true }
+  pickUpNote: { multiline: true, fillIns: false },
+  deliveryNote: { multiline: true, fillIns: false },
+  emailSubject: { multiline: false, fillIns: true },
+  emailMessage: { multiline: true, fillIns: true },
+  confirmedSubject: { multiline: false, fillIns: true },
+  confirmedMessage: { multiline: true, fillIns: true },
+  readySubject: { multiline: false, fillIns: true },
+  readyMessage: { multiline: true, fillIns: true },
+  shippedSubject: { multiline: false, fillIns: true },
+  shippedMessage: { multiline: true, fillIns: true }
 };
 
 const STATUS_OF: Record<StatusEmailKind, OrderStatus> = {
@@ -166,8 +168,8 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
       shown={shown}
       standard={DEFAULT_SETTINGS[key]}
       onChange={v => setDraft(d => ({ ...d, [key]: v }))}
-      label={ABOUT[key].label}
-      emptyText={ABOUT[key].empty}
+      label={MESSAGE_WORDS[key].label}
+      emptyText={MESSAGE_WORDS[key].empty}
       multiline={ABOUT[key].multiline}
       fillIns={ABOUT[key].fillIns}
     />
@@ -204,16 +206,16 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
   const orderEmail = (): React.ReactNode => (
     <div className={styles.email}>
       <dl className={styles.emailHead}>
-        <dt>From</dt>
+        <dt>{EMAIL_HEAD.from}</dt>
         <dd>{me}</dd>
-        <dt>To</dt>
+        <dt>{EMAIL_HEAD.to}</dt>
         <dd>
           {to.length
             ? to.join(', ')
-            : <span className={styles.muted}>Nobody yet. Add someone under &quot;Who gets order emails&quot; in Settings.</span>}
+            : <span className={styles.muted}>{EMAIL_HEAD.noRecipients}</span>}
         </dd>
-        {buyer.email && <><dt>Copy to</dt><dd>{buyer.email}</dd></>}
-        <dt>Subject</dt>
+        {buyer.email && <><dt>{EMAIL_HEAD.copyTo}</dt><dd>{buyer.email}</dd></>}
+        <dt>{EMAIL_HEAD.subject}</dt>
         <dd>{say('emailSubject', orderEmailSubject(draft, order, buyer))}</dd>
       </dl>
       <div className={styles.emailBody} onClickCapture={noLinks}>
@@ -231,12 +233,12 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
     return (
       <div className={styles.email}>
         <dl className={styles.emailHead}>
-          <dt>From</dt>
-          <dd>{me ? `${me} (you)` : 'You'}</dd>
-          <dt>To</dt>
-          <dd>{person.name} &lt;{person.email}&gt;</dd>
-          {to.length > 0 && <><dt>Replies go to</dt><dd>{to.join(', ')}</dd></>}
-          <dt>Subject</dt>
+          <dt>{EMAIL_HEAD.from}</dt>
+          <dd>{me ? EMAIL_HEAD.fromYou(me) : EMAIL_HEAD.you}</dd>
+          <dt>{EMAIL_HEAD.to}</dt>
+          <dd>{EMAIL_HEAD.person(person.name, person.email)}</dd>
+          {to.length > 0 && <><dt>{EMAIL_HEAD.repliesTo}</dt><dd>{to.join(', ')}</dd></>}
+          <dt>{EMAIL_HEAD.subject}</dt>
           <dd>{say(words.subject, statusEmailSubject(draft, kind, moved))}</dd>
         </dl>
         <div className={styles.emailBody} onClickCapture={noLinks}>
@@ -252,16 +254,13 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
     <div className={styles.customize}>
       <div className={styles.top}>
         <div>
-          <h2>Customize the messages</h2>
-          <p className={styles.intro}>
-            This is what staff see, with a made-up order. Click any outlined words to change them.
-            Fill-ins like {'{first name}'} and {'{order}'} are swapped for the real details on each order.
-          </p>
+          <h2>{CUSTOMIZE.title}</h2>
+          <p className={styles.intro}>{CUSTOMIZE.intro}</p>
         </div>
         <div className={styles.topActions}>
-          <PrimaryButton text="Save" disabled={!changed || saving} onClick={() => { save().catch(() => undefined); }} />
-          <DefaultButton text={changed ? 'Cancel' : 'Close'} disabled={saving} onClick={close} />
-          {saving && <Spinner size={SpinnerSize.small} label="Saving…" labelPosition="right" />}
+          <PrimaryButton text={COMMON.save} disabled={!changed || saving} onClick={() => { save().catch(() => undefined); }} />
+          <DefaultButton text={changed ? COMMON.cancel : COMMON.close} disabled={saving} onClick={close} />
+          {saving && <Spinner size={SpinnerSize.small} label={COMMON.saving} labelPosition="right" />}
         </div>
       </div>
 
@@ -272,16 +271,16 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
 
       <div className={styles.bar}>
         <Pivot selectedKey={tab} onLinkClick={item => { if (item && item.props.itemKey) setTab(item.props.itemKey as Tab); }}>
-          <PivotItem itemKey="checkout" headerText="Checkout" />
-          <PivotItem itemKey="placed" headerText="Order placed" />
-          <PivotItem itemKey="email" headerText="Email" />
+          <PivotItem itemKey="checkout" headerText={CUSTOMIZE.tabCheckout} />
+          <PivotItem itemKey="placed" headerText={CUSTOMIZE.tabPlaced} />
+          <PivotItem itemKey="email" headerText={CUSTOMIZE.tabEmail} />
         </Pivot>
         {tab !== 'checkout' && !oneWayOnly && (
           <ChoiceGroup
             className={styles.showFor}
-            label="Show it for"
+            label={CUSTOMIZE.showFor}
             selectedKey={method}
-            options={[{ key: 'Pick up', text: 'Pick-up' }, { key: 'Delivery', text: 'Delivery' }]}
+            options={[{ key: 'Pick up', text: CUSTOMIZE.showForPickUp }, { key: 'Delivery', text: CUSTOMIZE.showForDelivery }]}
             onChange={(_, o) => { if (o) setMethod(o.key as DeliveryMethod); }}
           />
         )}
@@ -290,7 +289,7 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
       <div className={styles.stage}>
         {tab === 'checkout' && (
           <div className={`${checkoutStyles.box} ${styles.narrow}`}>
-            <h2 className={checkoutStyles.heading}>How do you want it?</h2>
+            <h2 className={checkoutStyles.heading}>{CHECKOUT.methodTitle}</h2>
             <MethodChoices
               options={methodOptions(draft, true)} method={method} onPick={setMethod}
               name="customizeHowToGetIt" say={say}
@@ -306,15 +305,13 @@ const CustomizeMessages: React.FC<ICustomizeMessagesProps> = ({ sp, ids, site, s
           <>
             <ChoiceGroup
               className={styles.whichEmail}
-              label="Which email"
+              label={CUSTOMIZE.whichEmail}
               selectedKey={which}
               options={EMAILS}
               onChange={(_, o) => { if (o) setWhich(o.key as WhichEmail); }}
             />
             <p className={styles.emailNote}>
-              {which === 'order'
-                ? 'Goes to the store team, from the mailbox of the person who ordered. They get a copy.'
-                : 'Goes to the person who ordered, from the mailbox of whoever moves the order on.'}
+              {which === 'order' ? CUSTOMIZE.orderEmailNote : CUSTOMIZE.statusEmailNote}
             </p>
             {which === 'order' ? orderEmail() : statusEmail(which)}
           </>

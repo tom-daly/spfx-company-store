@@ -23,8 +23,10 @@ import { trackingHint } from '../../store/tracking';
 import DayField from './DayField';
 import { STATUS_OPTIONS } from './statusOptions';
 import AddressFields from '../checkout/AddressFields';
-import { METHOD_TITLES } from '../checkout/MethodChoices';
+import { METHOD_TITLES } from '../../strings/common';
 import UnsavedBar from '../UnsavedBar';
+import { COMMON } from '../../strings/common';
+import { ORDER_EDITOR } from '../../strings/manageOrders';
 
 export interface IOrderEditorProps {
   sp: SPFI;
@@ -154,10 +156,8 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
         <>
           {order.itemLines.length > 0
             ? <ul className={styles.readOnly}>{order.itemLines.map((text, i) => <li key={i}>{text}</li>)}</ul>
-            : <p className={styles.quiet}>Nothing is listed.</p>}
-          <p className={styles.hint}>
-            The quantities can&apos;t be changed here: this order&apos;s item details couldn&apos;t be read.
-          </p>
+            : <p className={styles.quiet}>{ORDER_EDITOR.noItems}</p>}
+          <p className={styles.hint}>{ORDER_EDITOR.itemsUnreadable}</p>
         </>
       );
     }
@@ -177,18 +177,18 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
                   <span className={styles.product}>{item.line.name}</span>
                   <span className={styles.meta}>
                     {item.line.variant && item.line.variant !== ONE_SIZE && <>{item.line.variant} · </>}
-                    {item.line.price === 0 ? 'Free' : `${money(item.line.price)} each`}
+                    {item.line.price === 0 ? ORDER_EDITOR.free : ORDER_EDITOR.priceEach(money(item.line.price))}
                   </span>
                   {differs && (
                     <span className={styles.was}>
-                      {off ? `Comes off the order (was ${item.line.qty})` : `Was ${item.line.qty}`}
+                      {off ? ORDER_EDITOR.comesOff(item.line.qty) : ORDER_EDITOR.was(item.line.qty)}
                     </span>
                   )}
                 </div>
                 <TextField
-                  className={styles.qty} ariaLabel={`Quantity of ${name}`} inputMode="numeric" value={item.qty}
+                  className={styles.qty} ariaLabel={ORDER_EDITOR.qtyLabel(name)} inputMode="numeric" value={item.qty}
                   onChange={(_, value) => setQty(i, value || '')} disabled={saving}
-                  errorMessage={wrong ? 'A whole number, 0 or more' : undefined}
+                  errorMessage={wrong ? ORDER_EDITOR.qtyInvalid : undefined}
                 />
                 <span className={styles.lineTotal}>
                   {qty !== undefined && qty > 0 ? money(lineTotal({ ...item.line, qty })) : ''}
@@ -197,9 +197,7 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
             );
           })}
         </ul>
-        <p className={styles.hint}>
-          Set a quantity to 0 to take it off the order. Stock is put back or taken to match.
-        </p>
+        <p className={styles.hint}>{ORDER_EDITOR.qtyHint}</p>
       </>
     );
   };
@@ -211,9 +209,9 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
       )}
       {problem && <MessageBar messageBarType={MessageBarType.error} isMultiline>{problem}</MessageBar>}
       <div className={styles.buttons}>
-        <PrimaryButton text="Save" disabled={saving} onClick={() => { save().catch(() => undefined); }} />
-        <DefaultButton componentRef={cancelRef} text="Cancel" disabled={saving} onClick={() => leave()} />
-        {saving && <Spinner size={SpinnerSize.small} label="Saving…" labelPosition="right" />}
+        <PrimaryButton text={COMMON.save} disabled={saving} onClick={() => { save().catch(() => undefined); }} />
+        <DefaultButton componentRef={cancelRef} text={COMMON.cancel} disabled={saving} onClick={() => leave()} />
+        {saving && <Spinner size={SpinnerSize.small} label={COMMON.saving} labelPosition="right" />}
       </div>
     </div>
   );
@@ -222,8 +220,8 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
     <Panel
       isOpen={open}
       type={PanelType.medium}
-      headerText={`Edit ${order.number}`}
-      closeButtonAriaLabel="Close"
+      headerText={ORDER_EDITOR.title(order.number)}
+      closeButtonAriaLabel={COMMON.close}
       onDismiss={leave}
       onDismissed={onClose}
       onRenderFooterContent={footer}
@@ -233,57 +231,57 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
         <div>
           <div className={styles.progress}>
             <Dropdown
-              className={styles.status} label="Status" selectedKey={form.status} options={STATUS_OPTIONS[form.method]}
-              disabled={saving}
+              className={styles.status} label={ORDER_EDITOR.status} selectedKey={form.status}
+              options={STATUS_OPTIONS[form.method]} disabled={saving}
               onChange={(_, option) => { if (option) setStatus(option.key as OrderStatus); }}
             />
             <DayField
-              label="Ready by" value={form.readyBy} disabled={saving}
+              label={ORDER_EDITOR.readyBy} value={form.readyBy} disabled={saving}
               onChange={day => setForm(f => ({ ...f, readyBy: day }))}
             />
             {pickedUp && (
               <DayField
-                label="Picked up on" value={form.pickedUpOn} disabled={saving}
+                label={ORDER_EDITOR.pickedUpOn} value={form.pickedUpOn} disabled={saving}
                 onChange={day => setForm(f => ({ ...f, pickedUpOn: day }))}
               />
             )}
             {delivering && (
               <TextField
-                className={styles.full} label="Tracking number or link" maxLength={MOST_TRACKING}
+                className={styles.full} label={ORDER_EDITOR.tracking} maxLength={MOST_TRACKING}
                 value={form.tracking} disabled={saving} description={trackingHint(form.tracking)}
                 onChange={(_, value) => setForm(f => ({ ...f, tracking: value || '' }))}
               />
             )}
           </div>
-          <p className={styles.hint}>
-            Saving here doesn&apos;t email anyone. To let them know, change the status in the orders table.
-          </p>
+          <p className={styles.hint}>{ORDER_EDITOR.noEmailHint}</p>
         </div>
 
         <section className={styles.section} role="group" aria-labelledby={itemsId}>
-          <h3 className={styles.heading} id={itemsId}>Items</h3>
+          <h3 className={styles.heading} id={itemsId}>{ORDER_EDITOR.items}</h3>
           {renderItems()}
           <p className={styles.total}>
-            <span>{total !== order.total ? 'New total' : 'Total'}</span>
+            <span>{total !== order.total ? ORDER_EDITOR.newTotal : COMMON.total}</span>
             <span>
-              {total !== order.total && <span className={styles.wasTotal}>was {money(order.total)}</span>}
+              {total !== order.total && (
+                <span className={styles.wasTotal}>{ORDER_EDITOR.wasTotal(money(order.total))}</span>
+              )}
               {money(total)}
             </span>
           </p>
         </section>
 
         <ChoiceGroup
-          className={styles.method} label="How they want it" selectedKey={form.method} options={METHOD_OPTIONS}
+          className={styles.method} label={ORDER_EDITOR.method} selectedKey={form.method} options={METHOD_OPTIONS}
           disabled={saving}
           onChange={(_, option) => { if (option) setMethod(option.key as DeliveryMethod); }}
         />
 
         {delivering && (
           <section className={styles.section} role="group" aria-labelledby={addressId}>
-            <h3 className={styles.heading} id={addressId}>Where it goes</h3>
+            <h3 className={styles.heading} id={addressId}>{ORDER_EDITOR.address}</h3>
             {unreadAddress && (
               <p className={styles.hint}>
-                This order&apos;s address couldn&apos;t be read into the boxes. It was written as:{' '}
+                {ORDER_EDITOR.addressUnreadable}{' '}
                 <span className={styles.written}>{order.shipTo.join(', ')}</span>
               </p>
             )}
@@ -295,7 +293,7 @@ const OrderEditor: React.FC<IOrderEditorProps> = ({ sp, ids, settings, order, wh
         )}
 
         <TextField
-          label="Note" multiline rows={3} value={form.note} disabled={saving}
+          label={ORDER_EDITOR.note} multiline rows={3} value={form.note} disabled={saving}
           onChange={(_, value) => setForm(f => ({ ...f, note: value || '' }))}
         />
       </div>

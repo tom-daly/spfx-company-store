@@ -3,6 +3,8 @@ import styles from './Checkout.module.scss';
 import type { IStoreSettings } from '../../store/settings';
 import type { DeliveryMethod } from '../../store/types';
 import type { Say } from '../customize/EditableText';
+import { METHOD_CHOICES } from '../../strings/checkout';
+import { METHOD_TITLES } from '../../strings/common';
 
 export interface IMethodOption {
   key: DeliveryMethod;
@@ -12,11 +14,6 @@ export interface IMethodOption {
   off?: boolean;
 }
 
-/** What each way to get an order is called, here and in the order editor. */
-export const METHOD_TITLES: Record<DeliveryMethod, string> = {
-  'Pick up': 'Pick up at the office',
-  Delivery: 'Delivery'
-};
 
 /* The ways to get an order that Settings has on, pick-up first as in the design. */
 export function methodOptions(settings: IStoreSettings, includeOff: boolean = false): IMethodOption[] {
@@ -43,7 +40,7 @@ export interface IMethodChoicesProps {
 
 /* The "How do you want it?" cards, shared by checkout and the Customize preview. */
 const MethodChoices: React.FC<IMethodChoicesProps> = ({ options, method, onPick, disabled, name, say }) => (
-  <div className={styles.choices} role="radiogroup" aria-label="How do you want it?">
+  <div className={styles.choices} role="radiogroup" aria-label={METHOD_CHOICES.label}>
     {options.map(o => {
       const noteKey = o.key === 'Pick up' ? 'pickUpNote' : 'deliveryNote';
       const note = o.note.trim();
@@ -57,7 +54,7 @@ const MethodChoices: React.FC<IMethodChoicesProps> = ({ options, method, onPick,
           <span>
             <span className={styles.choiceTitle}>
               {o.title}
-              {o.off && <span className={styles.offNote}> — turned off in Settings, so staff won&apos;t see this</span>}
+              {o.off && <span className={styles.offNote}>{' '}{METHOD_CHOICES.offNote}</span>}
             </span>
             {say
               ? <span className={styles.choiceNote}>{say(noteKey, note)}</span>

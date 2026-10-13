@@ -9,6 +9,7 @@ import { IGalleryPicture, galleryFor } from '../../store/gallery';
 import Gallery from './Gallery';
 import Stepper from './Stepper';
 import BackArrow from '../BackArrow';
+import { PRODUCT } from '../../strings/shop';
 
 export interface IProductPageProps {
   product: IProduct;
@@ -95,10 +96,10 @@ const ProductPage: React.FC<IProductPageProps> = ({ product: p, currency, inCart
   return (
     <div>
       <div className={styles.pageTop}>
-        <button type="button" className={styles.back} onClick={onBack}><BackArrow />All products</button>
+        <button type="button" className={styles.back} onClick={onBack}><BackArrow />{PRODUCT.back}</button>
         {onEdit && (
           <button type="button" className={css(styles.btn, styles.ghost, styles.small)} onClick={onEdit}>
-            Edit product
+            {PRODUCT.edit}
           </button>
         )}
       </div>
@@ -148,7 +149,7 @@ const ProductPage: React.FC<IProductPageProps> = ({ product: p, currency, inCart
                       key={v.value} type="button" className={css(styles.choice, out && styles.choiceOut)}
                       aria-pressed={on}
                       disabled={out && !on}
-                      title={out ? `${v.value} — none left` : v.value}
+                      title={out ? PRODUCT.noneLeft(v.value) : v.value}
                       onClick={() => pick(oi, v.value)}
                     >
                       {v.value}
@@ -161,8 +162,8 @@ const ProductPage: React.FC<IProductPageProps> = ({ product: p, currency, inCart
           {note && <p className={styles.pickNote} aria-live="polite">{note}</p>}
 
           <div className={styles.field}>
-            <span className={styles.fieldLabel} aria-hidden="true">Quantity</span>
-            <Stepper value={qty} min={1} max={max} label="Quantity" disabled={room === 0} onChange={setQty} />
+            <span className={styles.fieldLabel} aria-hidden="true">{PRODUCT.quantity}</span>
+            <Stepper value={qty} min={1} max={max} label={PRODUCT.quantity} disabled={room === 0} onChange={setQty} />
           </div>
 
           <button
@@ -178,8 +179,8 @@ const ProductPage: React.FC<IProductPageProps> = ({ product: p, currency, inCart
           {variant && mine > 0 && room > 0 && (
             <p className={styles.inCart}>
               {variant.label === ONE_SIZE
-                ? `You have ${mine} in your cart.`
-                : `You have ${mine} (${variant.label}) in your cart.`}
+                ? PRODUCT.inCart(mine)
+                : PRODUCT.inCartVariant(mine, variant.label)}
             </p>
           )}
         </div>

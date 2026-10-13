@@ -4,6 +4,7 @@ import {
   managersGroupId, othersCanOpen, staffLetIn
 } from './problems';
 import { inWords } from '../store/orderText';
+import { SETUP_ERRORS, SETUP_STEPS } from '../strings/setup';
 
 /*
  * Setup as a list of named steps, worked out before anything runs, so the page
@@ -63,18 +64,18 @@ function settingsToChange(def: IListDef, now: IListState | undefined): IListSett
 
 function describeSettings(def: IListDef, s: IListSettings): string {
   const parts: string[] = [];
-  if (s.Hidden === true) parts.push('hide it from the site contents');
-  if (s.Hidden === false) parts.push('show it in the site contents');
-  if (s.NoCrawl) parts.push('keep it out of search');
-  if (s.EnableVersioning === false) parts.push('stop keeping old copies');
-  if (s.ReadSecurity === OWN_ROWS) parts.push('let each person see only their own rows');
-  return `${def.title}: ${inWords(parts)}`;
+  if (s.Hidden === true) parts.push(SETUP_STEPS.hide);
+  if (s.Hidden === false) parts.push(SETUP_STEPS.show);
+  if (s.NoCrawl) parts.push(SETUP_STEPS.noSearch);
+  if (s.EnableVersioning === false) parts.push(SETUP_STEPS.noVersions);
+  if (s.ReadSecurity === OWN_ROWS) parts.push(SETUP_STEPS.ownRows);
+  return SETUP_STEPS.settings(def.title, inWords(parts));
 }
 
 const STAFF_LABEL: Record<string, (title: string) => string> = {
-  everyoneEdits: t => `Let staff update the numbers in ${t}`,
-  ownRows: t => `Let staff add their own rows to ${t}`,
-  ownRowsOnly: t => `Let staff add their own rows to ${t}`
+  everyoneEdits: SETUP_STEPS.staffEdits,
+  ownRows: SETUP_STEPS.staffAddOwn,
+  ownRowsOnly: SETUP_STEPS.staffAddOwn
 };
 
 /**
@@ -112,29 +113,26 @@ export function planSetup(state: StoreState, everyoneLogin: string): IStep[] {
     // Once the address list is locked, nobody but IT can change it from here — that is the point.
     if (!isNew && !now.canManage) continue;
 
-    if (isNew) add(def, 'makeList', `Make the ${def.title} list`);
+    if (isNew) add(def, 'makeList', SETUP_STEPS.makeList(def.title));
 
     const missing = missingFields(def, isNew ? undefined : now);
     if (missing.length === 1) {
-      add(def, 'addColumns', `Add the ${missing[0].title} column to ${def.title}`, { fields: [missing[0].name] });
+      add(def, 'addColumns', SETUP_STEPS.addColumn(missing[0].title, def.title), { fields: [missing[0].name] });
     } else if (missing.length > 1) {
-      add(def, 'addColumns', `Add ${missing.length} columns to ${def.title}`, { fields: missing.map(f => f.name) });
+      add(def, 'addColumns', SETUP_STEPS.addColumns(missing.length, def.title), { fields: missing.map(f => f.name) });
     }
 
     if (!isNew) {
       missingChoices(def, now).forEach(m => {
         const have = (now.choices && now.choices[m.name]) || [];
         const want = def.fields.filter(f => f.name === m.name)[0].choices || [];
-        add(def, 'addChoices', `Add ${inWords(m.choices)} to the ${m.title} column in ${def.title}`,
+        add(def, 'addChoices', SETUP_STEPS.addChoices(inWords(m.choices), m.title, def.title),
           { choices: { field: m.name, all: mergeChoices(have, want) } });
       });
     }
 
     // Views only on the first run, so changes made by hand afterwards stay put.
-    if (isNew) {
-      const names = def.views.map(v => `"${v.title}"`);
-      add(def, 'views', `Set up the ${names.join(' and ')} view${names.length > 1 ? 's' : ''}`);
-    }
+    if (isNew) add(def, 'views', SETUP_STEPS.setUpViews(def.views.map(v => v.title)));
 
     const settings = settingsToChange(def, isNew ? undefined : now);
     if (Object.keys(settings).length) add(def, 'settings', describeSettings(def, settings), { settings });
@@ -147,7 +145,7 @@ export function planSetup(state: StoreState, everyoneLogin: string): IStep[] {
     }
 
     if (def.access === 'ownRowsOnly' && (isNew || othersCanOpen(now, everyoneLogin) !== false)) {
-      add(def, 'lockOut', `Lock ${def.title} so site owners can't open it`);
+      add(def, 'lockOut', SETUP_STEPS.lockOut(def.title));
     }
   }
 
@@ -156,7 +154,7 @@ export function planSetup(state: StoreState, everyoneLogin: string): IStep[] {
   if (!state.managers) return steps;
   const groupId = managersGroupId(state);
   if (groupId === undefined) {
-    steps.push({ id: 'managers:makeGroup', kind: 'makeGroup', label: 'Make the Store managers group', state: 'waiting' });
+    steps.push({ id: 'managers:makeGroup', kind: 'makeGroup', label: SETUP_STEPS.makeGroup, state: 'waiting' });
   }
   for (const def of STORE_LISTS) {
     if (!def.managers) continue;
@@ -164,12 +162,12 @@ export function planSetup(state: StoreState, everyoneLogin: string): IStep[] {
     const isNew = !now || !now.exists;
     if (!isNew && !now.canManage) continue;
     if (isNew || groupId === undefined || managersCanChange(now, groupId) !== true) {
-      add(def, 'managersAccess', `Let store managers change ${def.title}`);
+      add(def, 'managersAccess', SETUP_STEPS.managersAccess(def.title));
     }
   }
   if (groupId === undefined || managersCanAddPhotos(state.photos, groupId) !== true) {
     steps.push({
-      id: 'photos:managersPhotos', kind: 'managersPhotos', label: 'Let store managers add product photos', state: 'waiting'
+      id: 'photos:managersPhotos', kind: 'managersPhotos', label: SETUP_STEPS.managersPhotos, state: 'waiting'
     });
   }
   return steps;
@@ -180,9 +178,7 @@ export function planSetup(state: StoreState, everyoneLogin: string): IStep[] {
  * the list it works on, or the Store managers group.
  */
 export function skipReason(step: IStep, unmade: Set<Unmade>): string | undefined {
-  if (step.list && unmade.has(step.list)) return `Skipped because ${listDef(step.list).title} wasn't made.`;
-  if (NEEDS_GROUP.indexOf(step.kind) > -1 && unmade.has('managers')) {
-    return 'Skipped because the Store managers group couldn\'t be made.';
-  }
+  if (step.list && unmade.has(step.list)) return SETUP_ERRORS.skippedNoList(listDef(step.list).title);
+  if (NEEDS_GROUP.indexOf(step.kind) > -1 && unmade.has('managers')) return SETUP_ERRORS.skippedNoGroup;
   return undefined;
 }

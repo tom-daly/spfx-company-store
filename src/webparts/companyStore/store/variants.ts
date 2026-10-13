@@ -1,4 +1,5 @@
 import { IOption, IVariant, ONE_SIZE } from './types';
+import { PRODUCT_CHECKS } from '../strings/productWords';
 
 /*
  * The rules for variants, shared by the product form and the shop. Nothing in
@@ -150,14 +151,12 @@ export function tidyOptions(options: IOption[]): IOption[] {
 /** What is wrong with a product's options, in plain words, or undefined if nothing. */
 export function checkOptions(options: IOption[]): string | undefined {
   const named = options.filter(o => o.name.trim() || o.values.some(v => v.value.trim()));
-  if (named.some(o => !o.name.trim())) return 'Give each option a name, like Size or Colour.';
-  if (named.some(o => !o.values.some(v => v.value.trim()))) return 'Give each option at least one choice.';
+  if (named.some(o => !o.name.trim())) return PRODUCT_CHECKS.optionNeedsName;
+  if (named.some(o => !o.values.some(v => v.value.trim()))) return PRODUCT_CHECKS.optionNeedsChoice;
   const tidy = tidyOptions(options);
-  if (tidy.length < named.length) return 'Two options have the same name. Give each its own.';
-  if (tidy.length > MAX_OPTIONS) return `A product can vary by up to ${MAX_OPTIONS} things.`;
+  if (tidy.length < named.length) return PRODUCT_CHECKS.optionSameName;
+  if (tidy.length > MAX_OPTIONS) return PRODUCT_CHECKS.tooManyOptions(MAX_OPTIONS);
   const count = allCombos(tidy).length;
-  if (tidy.length && count > MAX_VARIANTS) {
-    return `That makes ${count} combinations. Keep it to ${MAX_VARIANTS} or fewer.`;
-  }
+  if (tidy.length && count > MAX_VARIANTS) return PRODUCT_CHECKS.tooManyCombinations(count, MAX_VARIANTS);
   return undefined;
 }

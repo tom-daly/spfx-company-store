@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ActionButton, DatePicker, DayOfWeek, Label, getId } from '@fluentui/react';
 import styles from './OrderEditor.module.scss';
 import { dayText, fromIsoDate, isoDate } from '../../store/dates';
+import { DAY_FIELD } from '../../strings/manageOrders';
 
 export interface IDayFieldProps {
   label: string;
@@ -51,7 +52,8 @@ const DayField: React.FC<IDayFieldProps> = ({ label, value, onChange, disabled }
         />
         {/* Stays put when there's nothing to clear, so the keyboard isn't thrown elsewhere after a Clear. */}
         <ActionButton
-          className={styles.clearDay} iconProps={{ iconName: 'Cancel' }} text="Clear" ariaLabel={`Clear ${label}`}
+          className={styles.clearDay} iconProps={{ iconName: 'Cancel' }}
+          text={DAY_FIELD.clear} ariaLabel={DAY_FIELD.clearLabel(label)}
           disabled={disabled || !value} allowDisabledFocus onClick={clear}
         />
       </div>

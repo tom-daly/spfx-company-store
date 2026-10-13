@@ -9,6 +9,7 @@
  * views are only applied when a list is first created, so anything the client
  * adjusts by hand afterwards is left alone.
  */
+import { SETUP_ERRORS } from '../strings/setup';
 
 export type ListKey = 'settings' | 'products' | 'stock' | 'orders' | 'addresses';
 
@@ -127,7 +128,7 @@ function lookup(name: string, title: string, to: ListKey, o: IFieldOptions = {})
     ...base,
     xml: (ids) => {
       const id = ids[to];
-      if (!id) throw new Error(`The ${to} list has to exist before ${name} can point at it.`);
+      if (!id) throw new Error(SETUP_ERRORS.lookupBeforeList(to, name));
       return base.xml(ids).replace(' />', ` List="{${id}}" ShowField="Title" />`);
     }
   };
@@ -142,6 +143,10 @@ export const DELIVERY_METHODS = ['Pick up', 'Delivery'];
 
 /** The SharePoint group whose people run the store. Site owners add and remove them from the store's Settings. */
 export const MANAGERS_GROUP = 'Company Store Managers';
+
+/** What the Store managers group says it is for, in SharePoint's own group pages. */
+export const MANAGERS_DESCRIPTION = 'People who run the company store: products, stock and orders. ' +
+  'Site owners add people from the store\'s Settings.';
 
 /** The Site Assets library is always at this address on the site, whatever language the site is in. */
 export const SITE_ASSETS = 'SiteAssets';

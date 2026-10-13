@@ -9,6 +9,8 @@ import { ISiteInfo, listWebUrl } from '../../setup/problems';
 import { CURRENCIES, Currency, IStoreSettings, checkSettings } from '../../store/settings';
 import { saveSettings } from '../../store/settingsStore';
 import { explain } from '../../setup/errors';
+import { COMMON } from '../../strings/common';
+import { SETTINGS_PAGE } from '../../strings/manageSettings';
 import StoreManagers from './StoreManagers';
 
 export interface ISettingsPageProps {
@@ -94,14 +96,14 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
     <div className={styles.page}>
       <div className={styles.head}>
         <div>
-          <h2>Settings</h2>
-          <p className={styles.intro}>These apply to the whole store, on every page it appears.</p>
+          <h2>{SETTINGS_PAGE.title}</h2>
+          <p className={styles.intro}>{SETTINGS_PAGE.intro}</p>
         </div>
       </div>
 
       <div className={styles.form}>
         <Dropdown
-          label="Currency"
+          label={SETTINGS_PAGE.currency}
           selectedKey={form.currency}
           options={CURRENCIES.map(c => ({ key: c.code, text: c.label }))}
           disabled={saving}
@@ -109,59 +111,55 @@ const SettingsPage: React.FC<ISettingsPageProps> = ({
         />
 
         <TextField
-          label="Order numbers start with"
+          label={SETTINGS_PAGE.orderPrefix}
           value={form.orderPrefix}
           disabled={saving}
           onChange={(_, v) => set('orderPrefix', v || '')}
-          description={`Like CS- for CS-0042. Orders will be numbered ${prefix}0001, ${prefix}0002 and so on.`}
+          description={SETTINGS_PAGE.orderPrefixHint(prefix)}
         />
 
         <TextField
-          label="Who gets order emails"
+          label={SETTINGS_PAGE.orderEmails}
           value={form.orderEmails}
           disabled={saving}
           onChange={(_, v) => set('orderEmails', v || '')}
-          description="One or more email addresses, separated by commas. A shared mailbox works too."
+          description={SETTINGS_PAGE.orderEmailsHint}
         />
 
-        <h3>How people get their order</h3>
+        <h3>{SETTINGS_PAGE.methods}</h3>
         <Toggle
-          label="Pick up at the office" checked={form.pickUp} disabled={saving}
-          onChange={(_, v) => set('pickUp', !!v)} onText="On" offText="Off"
+          label={SETTINGS_PAGE.pickUp} checked={form.pickUp} disabled={saving}
+          onChange={(_, v) => set('pickUp', !!v)} onText={SETTINGS_PAGE.on} offText={SETTINGS_PAGE.off}
         />
         <Toggle
-          label="Delivery" checked={form.delivery} disabled={saving}
-          onChange={(_, v) => set('delivery', !!v)} onText="On" offText="Off"
+          label={SETTINGS_PAGE.delivery} checked={form.delivery} disabled={saving}
+          onChange={(_, v) => set('delivery', !!v)} onText={SETTINGS_PAGE.on} offText={SETTINGS_PAGE.off}
         />
 
         {error && <MessageBar messageBarType={MessageBarType.error} isMultiline>{error}</MessageBar>}
       </div>
 
       <div className={styles.actions}>
-        <PrimaryButton text="Save" disabled={!changed || saving} onClick={() => { save().catch(() => undefined); }} />
-        {saving && <Spinner size={SpinnerSize.small} label="Saving…" labelPosition="right" />}
+        <PrimaryButton
+          text={COMMON.save} disabled={!changed || saving} onClick={() => { save().catch(() => undefined); }}
+        />
+        {saving && <Spinner size={SpinnerSize.small} label={COMMON.saving} labelPosition="right" />}
         {/* Always there, so screen readers hear "Saved." when it appears. */}
-        <span className={styles.saved} role="status">{saved && !changed ? 'Saved.' : ''}</span>
+        <span className={styles.saved} role="status">{saved && !changed ? SETTINGS_PAGE.saved : ''}</span>
       </div>
 
       <section className={styles.section}>
-        <h3>Messages</h3>
-        <p className={styles.intro}>
-          The pick-up and delivery instructions, the message after an order and the order email are
-          changed on the screens themselves, so you can see them as staff will.
-        </p>
-        <DefaultButton text="Customize the messages" disabled={saving} onClick={onCustomize} />
+        <h3>{SETTINGS_PAGE.messages}</h3>
+        <p className={styles.intro}>{SETTINGS_PAGE.messagesIntro}</p>
+        <DefaultButton text={SETTINGS_PAGE.customize} disabled={saving} onClick={onCustomize} />
       </section>
 
       {/* Saves each change by itself, straight away, so it has no part in Save or unsaved changes. */}
       <StoreManagers sp={sp} site={site} />
 
       <section className={styles.section}>
-        <h3>SharePoint lists</h3>
-        <p className={styles.intro}>
-          The store keeps everything in SharePoint lists. You won&apos;t need them day to day, but you can
-          open them to see the rows themselves.
-        </p>
+        <h3>{SETTINGS_PAGE.lists}</h3>
+        <p className={styles.intro}>{SETTINGS_PAGE.listsIntro}</p>
         <ul className={styles.links}>
           {RAW_LISTS.map(key => {
             const def = listDef(key);

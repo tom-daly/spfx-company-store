@@ -6,6 +6,8 @@ import { IStatusDetails, MOST_TRACKING } from '../../store/orderEdits';
 import type { StatusEmailKind } from '../../store/statusEmailText';
 import { trackingHint } from '../../store/tracking';
 import DayField from './DayField';
+import { COMMON } from '../../strings/common';
+import { STATUS_DIALOG } from '../../strings/manageOrders';
 
 export interface IStatusDialogProps {
   /** The order as the table shows it, before the change. */
@@ -50,12 +52,12 @@ const StatusDialog: React.FC<IStatusDialogProps> = ({ order, kind, onConfirm, on
           // Confirmed means it's being worked on; the day often isn't known yet.
           <div>
             <DayField label={readyByLabel(order.method)} value={readyBy} onChange={setReadyBy} />
-            <p className={styles.hint}>Not sure yet? Leave it empty and add it later in Edit order.</p>
+            <p className={styles.hint}>{STATUS_DIALOG.readyByHint}</p>
           </div>
         )}
         {kind === 'shipped' && (
           <TextField
-            label="Tracking number or link" value={tracking} maxLength={MOST_TRACKING}
+            label={STATUS_DIALOG.tracking} value={tracking} maxLength={MOST_TRACKING}
             description={trackingHint(tracking)}
             onChange={(_, value) => setTracking(value || '')}
             onKeyDown={e => { if (e.key === 'Enter') go(); }}
@@ -64,7 +66,7 @@ const StatusDialog: React.FC<IStatusDialogProps> = ({ order, kind, onConfirm, on
         {ask.emailLabel ? (
           <div>
             <Checkbox label={ask.emailLabel} checked={email} onChange={(_, checked) => setEmail(!!checked)} />
-            <p className={styles.mailbox}>Sent from your mailbox.</p>
+            <p className={styles.mailbox}>{STATUS_DIALOG.sentFrom}</p>
           </div>
         ) : (
           <p className={styles.quiet}>{ask.noEmail}</p>
@@ -72,7 +74,7 @@ const StatusDialog: React.FC<IStatusDialogProps> = ({ order, kind, onConfirm, on
       </div>
       <DialogFooter>
         <PrimaryButton text={ask.button} onClick={go} />
-        <DefaultButton text="Cancel" onClick={onCancel} />
+        <DefaultButton text={COMMON.cancel} onClick={onCancel} />
       </DialogFooter>
     </Dialog>
   );

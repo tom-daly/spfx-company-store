@@ -4,8 +4,7 @@ import styles from './Shop.module.scss';
 import type { IProduct } from '../../store/types';
 import type { Currency } from '../../store/settings';
 import { matchesSearch, priceText, stockLabel } from '../../store/shopText';
-import { countText } from '../../strings/plural';
-import { PRODUCTS } from '../../strings/common';
+import { GRID } from '../../strings/shop';
 import Photo from './Photo';
 
 export interface IProductGridProps {
@@ -60,10 +59,8 @@ const ProductGrid: React.FC<IProductGridProps> = (
   if (!products.length) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyTitle}>There&apos;s nothing in the shop right now</span>
-        {canRun
-          ? 'Products show up here once they are Active. Turn that on in Products & stock.'
-          : 'Check back soon.'}
+        <span className={styles.emptyTitle}>{GRID.emptyTitle}</span>
+        {canRun ? GRID.emptyHintManager : GRID.emptyHintStaff}
       </div>
     );
   }
@@ -71,17 +68,17 @@ const ProductGrid: React.FC<IProductGridProps> = (
   return (
     <>
       <p className={styles.srOnly} aria-live="polite">
-        {searching ? `${countText(found.length, PRODUCTS)} found` : ''}
+        {searching ? GRID.found(found.length) : ''}
       </p>
       {found.length === 0 ? (
         <div className={styles.empty}>
-          <span className={styles.emptyTitle}>Nothing matches that</span>
-          Try a shorter search, or{' '}
-          <button type="button" className={styles.linkButton} onClick={onClearSearch}>clear it</button>
-          {' '}to see everything.
+          <span className={styles.emptyTitle}>{GRID.noMatchTitle}</span>
+          {GRID.noMatchBefore}{' '}
+          <button type="button" className={styles.linkButton} onClick={onClearSearch}>{GRID.clearSearch}</button>
+          {' '}{GRID.noMatchAfter}
         </div>
       ) : (
-        <ul className={styles.grid} ref={listRef} aria-label="Products">
+        <ul className={styles.grid} ref={listRef} aria-label={GRID.label}>
           {found.map(p => (
             <li key={p.id}>
               <ProductCard product={p} currency={currency} onOpen={onOpen} />

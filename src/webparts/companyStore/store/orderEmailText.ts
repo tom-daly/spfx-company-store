@@ -9,12 +9,14 @@ import type { IStoreSettings } from './settings';
 import type { IBuyer, ICartLine, IPlacedOrder } from './types';
 import { displayName, fillInsFor, message } from './messages';
 import { lineName } from './orderText';
+import { COMMON } from '../strings/common';
+import { EMAIL_PROBLEMS, EMAIL_WORDS, ORDER_EMAIL } from '../strings/emails';
 
-export const NO_ONE_TO_EMAIL: string = 'No one is set to get order emails yet.';
-export const NOT_APPROVED: string = "IT hasn't approved the store sending email yet, so no email went.";
-export const NOT_SENT: string = "The order email couldn't be sent.";
+export const NO_ONE_TO_EMAIL: string = EMAIL_PROBLEMS.noOneToEmail;
+export const NOT_APPROVED: string = EMAIL_PROBLEMS.notApproved;
+export const NOT_SENT: string = EMAIL_PROBLEMS.orderNotSent;
 /** The same, for the emails to the person who ordered. */
-export const EMAIL_NOT_SENT: string = "The email couldn't be sent.";
+export const EMAIL_NOT_SENT: string = EMAIL_PROBLEMS.notSent;
 
 /** Makes text that people typed safe to put in the email, so it shows as typed and can't add links or code. */
 export function escapeHtml(text: string): string {
@@ -95,32 +97,32 @@ export function itemsAndTotal(lines: ICartLine[], total: number, settings: IStor
   return '<table cellpadding="0" cellspacing="0" border="0" width="100%" ' +
       'style="border-collapse:collapse;width:100%;max-width:560px;">' +
     '<tr>' +
-      `<th align="left" style="${HEAD_CELL}width:48px;">Qty</th>` +
-      `<th align="left" style="${HEAD_CELL}">Item</th>` +
-      `<th align="right" style="${HEAD_CELL}">Price</th>` +
+      `<th align="left" style="${HEAD_CELL}width:48px;">${EMAIL_WORDS.qty}</th>` +
+      `<th align="left" style="${HEAD_CELL}">${EMAIL_WORDS.item}</th>` +
+      `<th align="right" style="${HEAD_CELL}">${COMMON.price}</th>` +
     '</tr>' +
     rows.join('') +
     '<tr>' +
       `<td style="${TOTAL_CELL}"></td>` +
-      `<td style="${TOTAL_CELL}">Total</td>` +
+      `<td style="${TOTAL_CELL}">${COMMON.total}</td>` +
       `<td align="right" style="${TOTAL_CELL}white-space:nowrap;">${escapeHtml(formatMoney(total, settings.currency))}</td>` +
     '</tr>' +
     '</table>' +
-    (total === 0 ? `<p style="${PARA}margin-top:12px;">Nothing to pay.</p>` : '');
+    (total === 0 ? `<p style="${PARA}margin-top:12px;">${EMAIL_WORDS.nothingToPay}</p>` : '');
 }
 
 function howTheyWantIt(order: IPlacedOrder, settings: IStoreSettings): string {
   if (order.method === 'Pick up') {
     const note = (settings.pickUpNote || '').trim();
-    return `<p style="${LABEL}">Pick up at the office</p>` + quietParagraph(note);
+    return `<p style="${LABEL}">${EMAIL_WORDS.pickUpHeading}</p>` + quietParagraph(note);
   }
   const note = (settings.deliveryNote || '').trim();
   const phone = (order.phone || '').trim();
   const address = [
     (order.shipTo || '').trim() ? withBreaks(order.shipTo) : '',
-    phone ? `Phone: ${escapeHtml(phone)}` : ''
+    phone ? ORDER_EMAIL.phone(escapeHtml(phone)) : ''
   ].filter(Boolean).join('<br>');
-  return `<p style="${LABEL}">Delivery</p>` +
+  return `<p style="${LABEL}">${ORDER_EMAIL.deliveryHeading}</p>` +
     quietParagraph(note) +
     (address ? `<p style="${PARA}">${address}</p>` : '');
 }
@@ -131,11 +133,12 @@ export function orderEmailDetails(
 ): string {
   const who = escapeHtml(displayName(buyer));
   const note = (order.note || '').trim();
+  const noteFrom = who ? ORDER_EMAIL.noteFrom(who) : ORDER_EMAIL.noteFromNoName;
   return itemsAndTotal(order.lines, order.total, settings) +
     howTheyWantIt(order, settings) +
-    (note ? `<p style="${LABEL}">Note from ${who || 'the buyer'}</p>` + paragraph(note) : '') +
-    (ordersUrl ? linkParagraph(ordersUrl, 'See the order in the orders list') : '') +
-    `<p style="${FOOTER}">Sent by the company store${who ? ` on behalf of ${who}` : ''}.</p>`;
+    (note ? `<p style="${LABEL}">${noteFrom}</p>` + paragraph(note) : '') +
+    (ordersUrl ? linkParagraph(ordersUrl, ORDER_EMAIL.seeOrder) : '') +
+    `<p style="${FOOTER}">${who ? ORDER_EMAIL.footerFor(who) : ORDER_EMAIL.footer}</p>`;
 }
 
 /** The email body as HTML. Everything people typed is escaped. */
@@ -245,5 +248,5 @@ const NOT_APPROVED_SIGNS: RegExp = /consent|AADSTS65001|Authorization_RequestDen
 export function whyEmailFailed(e: unknown, notSent: string = NOT_SENT): string {
   if (statusOf(e) === 403 || NOT_APPROVED_SIGNS.test(textOf(e))) return NOT_APPROVED;
   const reason = shortReason(e);
-  return reason ? `${notSent} ${reason}` : notSent;
+  return reason ? EMAIL_PROBLEMS.notSentBecause(notSent, reason) : notSent;
 }

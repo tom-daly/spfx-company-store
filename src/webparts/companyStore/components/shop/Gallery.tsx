@@ -3,6 +3,7 @@ import { Icon, css } from '@fluentui/react';
 import styles from './Shop.module.scss';
 import { IGalleryPicture, startAt } from '../../store/gallery';
 import Photo from './Photo';
+import { GALLERY, PRODUCT } from '../../strings/shop';
 
 export interface IGalleryProps {
   /** The product's name, for the big picture's alt text. */
@@ -63,20 +64,20 @@ const Gallery: React.FC<IGalleryProps> = ({ name, pictures, isPicked, isOut, onP
       <div className={styles.stage} tabIndex={several ? -1 : undefined}>
         <Photo
           url={big ? big.url : undefined}
-          alt={big && big.value ? `${name}, ${big.value}` : name}
+          alt={big && big.value ? GALLERY.photoOf(name, big.value) : name}
           className={styles.mainPhoto}
         />
         {several && (
           <>
             <button
               type="button" className={css(styles.flip, styles.flipPrev)}
-              aria-label="Previous photo" title="Previous photo" onClick={() => show(index - 1)}
+              aria-label={GALLERY.previous} title={GALLERY.previous} onClick={() => show(index - 1)}
             >
               <Icon iconName="ChevronLeft" aria-hidden="true" />
             </button>
             <button
               type="button" className={css(styles.flip, styles.flipNext)}
-              aria-label="Next photo" title="Next photo" onClick={() => show(index + 1)}
+              aria-label={GALLERY.next} title={GALLERY.next} onClick={() => show(index + 1)}
             >
               <Icon iconName="ChevronRight" aria-hidden="true" />
             </button>
@@ -87,13 +88,12 @@ const Gallery: React.FC<IGalleryProps> = ({ name, pictures, isPicked, isOut, onP
       {several && (
         <>
           <p className={styles.srOnly} aria-live="polite">
-            {`Photo ${index + 1} of ${count}${big && big.value ? `: ${big.value}` : ''}`}
+            {big && big.value ? GALLERY.positionChoice(index + 1, count, big.value) : GALLERY.position(index + 1, count)}
           </p>
-          <div className={styles.thumbs} ref={thumbsRef} role="group" aria-label="Photos">
+          <div className={styles.thumbs} ref={thumbsRef} role="group" aria-label={GALLERY.thumbs}>
             {pictures.map((pic, i) => {
               const on = !!pic.value && isPicked(pic);
               const out = !!pic.value && isOut(pic);
-              const position = `${i + 1} of ${count}`;
               /* The same photo never shows twice, so its address is a steady key: focus stays
                  on a choice's thumbnail when picking it moves it to the front. Like its choice
                  button, a pick that sold out while the page was open stays clickable. */
@@ -103,10 +103,10 @@ const Gallery: React.FC<IGalleryProps> = ({ name, pictures, isPicked, isOut, onP
                   className={css(styles.thumb, out && styles.thumbOut)}
                   aria-current={i === index}
                   aria-label={!pic.value
-                    ? `Photo ${position}`
-                    : out ? `${pic.value}, none left` : `${pic.value}, photo ${position}`}
+                    ? GALLERY.position(i + 1, count)
+                    : out ? GALLERY.thumbNoneLeft(pic.value) : GALLERY.thumbChoice(pic.value, i + 1, count)}
                   disabled={out && !on}
-                  title={out ? `${pic.value} — none left` : pic.value}
+                  title={out && pic.value ? PRODUCT.noneLeft(pic.value) : pic.value}
                   onClick={() => choose(i)}
                 >
                   <Photo url={pic.url} alt="" className={styles.thumbPhoto} small />

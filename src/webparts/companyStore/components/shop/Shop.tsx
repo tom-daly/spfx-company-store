@@ -8,7 +8,6 @@ import type { IStoreSettings } from '../../store/settings';
 import type { GetGraph } from '../../store/orderEmail';
 import type { ICartLine, IPlacedOrder, IProduct } from '../../store/types';
 import { loadCatalog } from '../../store/catalog';
-import { itemCountText } from '../../store/ordersView';
 import Checkout from '../checkout/Checkout';
 import OrderPlaced from '../checkout/OrderPlaced';
 import { useCart } from './useCart';
@@ -18,6 +17,7 @@ import CartPanel from './CartPanel';
 import LoadFailed from '../LoadFailed';
 import { useLoad } from '../useLoad';
 import { scrollToTopIfPast } from '../scrollToTopIfPast';
+import { SHOP } from '../../strings/shop';
 
 export interface IShopProps {
   sp: SPFI;
@@ -90,7 +90,7 @@ const Shop: React.FC<IShopProps> = ({ sp, ids, site, settings, getGraph, canRun,
           <div className={styles.search}>
             <Icon iconName="Search" className={styles.searchMark} aria-hidden="true" />
             <input
-              type="search" placeholder="Search the store" aria-label="Search the store" value={query}
+              type="search" placeholder={SHOP.search} aria-label={SHOP.search} value={query}
               onChange={e => {
                 setQuery(e.target.value);
                 if (view.kind === 'product') toGrid();
@@ -99,13 +99,13 @@ const Shop: React.FC<IShopProps> = ({ sp, ids, site, settings, getGraph, canRun,
           </div>
           <div className={styles.barButtons}>
             <button type="button" className={styles.ordersButton} onClick={onMyOrders}>
-              <Icon iconName="Package" className={styles.buttonIcon} aria-hidden="true" />My orders
+              <Icon iconName="Package" className={styles.buttonIcon} aria-hidden="true" />{SHOP.myOrders}
             </button>
             <button
               type="button" className={styles.cartButton} onClick={() => setCartOpen(true)}
-              aria-label={`Cart, ${itemCountText(cart.count)}`}
+              aria-label={SHOP.cartLabel(cart.count)}
             >
-              Cart <span className={styles.count} aria-hidden="true">{cart.count}</span>
+              {SHOP.cart} <span className={styles.count} aria-hidden="true">{cart.count}</span>
             </button>
           </div>
         </div>
@@ -113,19 +113,19 @@ const Shop: React.FC<IShopProps> = ({ sp, ids, site, settings, getGraph, canRun,
 
       {shopping && loadError && (
         <LoadFailed
-          lead="The shop could not load." error={loadError} onRetry={() => { reload().catch(() => undefined); }}
+          lead={SHOP.loadFailed} error={loadError} onRetry={() => { reload().catch(() => undefined); }}
         />
       )}
 
       {shopping && cartChanged && (
         <div className={styles.note} role="status">
-          <span>Your cart has been updated to match what&apos;s left in the store.</span>
-          <button type="button" className={styles.linkButton} onClick={() => setCartChanged(false)}>OK</button>
+          <span>{SHOP.cartChanged}</span>
+          <button type="button" className={styles.linkButton} onClick={() => setCartChanged(false)}>{SHOP.ok}</button>
         </div>
       )}
 
       {shopping && !products && !loadError && (
-        <Spinner className={styles.loading} size={SpinnerSize.medium} label="Loading the shop…" />
+        <Spinner className={styles.loading} size={SpinnerSize.medium} label={SHOP.loading} />
       )}
 
       {view.kind === 'grid' && products && (

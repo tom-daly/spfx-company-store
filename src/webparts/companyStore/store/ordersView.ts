@@ -10,6 +10,9 @@ import type { DeliveryMethod, IAddress, ICartLine } from './types';
 import { itemCount, lineName, orderTotal, shipToText } from './orderText';
 import { countText } from '../strings/plural';
 import { ITEMS } from '../strings/common';
+import {
+  FILTERED_ORDERS, ORDERS_EMPTY, ORDER_FILTERS, ORDER_SUMMARY, ORDER_WORDS, STATUS_ASK
+} from '../strings/orderWords';
 import { IHistoryEntry, parseHistory } from './orderHistory';
 import { isIsoDate } from './dates';
 import { matchesWords } from './shopText';
@@ -206,7 +209,7 @@ function statusFrom(v: unknown, method: DeliveryMethod): OrderStatus {
 const dayFrom = (v: unknown): string => (isIsoDate(text(v)) ? text(v) : '');
 
 /** Who placed it, when SharePoint has neither their name nor their email. */
-export const NOBODY = 'Unknown';
+export const NOBODY: string = ORDER_WORDS.unknownPerson;
 
 /* The Ship to column, or failing that the address the order data kept. */
 function whereTo(row: IOrderRow, data: IOrderData): string[] {
@@ -285,7 +288,7 @@ export function firstNameOf(order: Pick<IOrder, 'who'>): string {
 
 /** The label on the ready-by day when an order is confirmed. */
 export const readyByLabel = (method: DeliveryMethod): string =>
-  method === 'Pick up' ? 'Ready for pick-up by' : 'Ready to send by';
+  method === 'Pick up' ? STATUS_ASK.readyForPickUpBy : STATUS_ASK.readyToSendBy;
 
 /** The words in the box that opens before an order is confirmed, marked ready for pick-up or marked shipped. */
 export interface IStatusAsk {
@@ -298,21 +301,23 @@ export interface IStatusAsk {
   noEmail: string;
 }
 
-const ASK_WORDS: Record<StatusEmailKind, { title: (number: string) => string; button: string; email: string }> = {
-  confirmed: { title: n => `Confirm ${n}`, button: 'Confirm', email: "to say it's confirmed" },
-  ready: { title: n => `${n} is ready for pick-up`, button: 'Mark ready', email: 'to come and pick it up' },
-  shipped: { title: n => `Mark ${n} shipped`, button: 'Mark shipped', email: "to say it's on its way" }
+const ASK_WORDS: Record<StatusEmailKind, {
+  title: (number: string) => string; button: string; email: (firstName: string) => string;
+}> = {
+  confirmed: { title: STATUS_ASK.confirmTitle, button: STATUS_ASK.confirmButton, email: STATUS_ASK.emailConfirmed },
+  ready: { title: STATUS_ASK.readyTitle, button: STATUS_ASK.readyButton, email: STATUS_ASK.emailReady },
+  shipped: { title: STATUS_ASK.shippedTitle, button: STATUS_ASK.shippedButton, email: STATUS_ASK.emailShipped }
 };
 
 export function statusAsk(order: Pick<IOrder, 'number' | 'who' | 'email'>, kind: StatusEmailKind): IStatusAsk {
   const words = ASK_WORDS[kind];
   const canEmail = order.email.trim().length > 0;
-  const name = order.who === NOBODY ? 'this order' : order.who;
+  const noEmail = order.who === NOBODY ? STATUS_ASK.noEmailNoName : STATUS_ASK.noEmail(order.who);
   return {
     title: words.title(order.number),
     button: words.button,
-    emailLabel: canEmail ? `Email ${firstNameOf(order)} ${words.email}` : '',
-    noEmail: canEmail ? '' : `There's no email address for ${name}, so no email can go.`
+    emailLabel: canEmail ? words.email(firstNameOf(order)) : '',
+    noEmail: canEmail ? '' : noEmail
   };
 }
 
@@ -322,13 +327,13 @@ export function statusAsk(order: Pick<IOrder, 'number' | 'who' | 'email'>, kind:
 export type OrderFilter = 'open' | 'New' | 'Confirmed' | 'Packed' | 'Ready for pick-up' | 'done' | 'all';
 
 export const FILTERS: { key: OrderFilter; label: string }[] = [
-  { key: 'open', label: 'Open' },
-  { key: 'New', label: 'New' },
-  { key: 'Confirmed', label: 'Confirmed' },
-  { key: 'Packed', label: 'Packed' },
-  { key: 'Ready for pick-up', label: 'Ready for pick-up' },
-  { key: 'done', label: 'Done' },
-  { key: 'all', label: 'All' }
+  { key: 'open', label: ORDER_FILTERS.open },
+  { key: 'New', label: ORDER_FILTERS.new },
+  { key: 'Confirmed', label: ORDER_FILTERS.confirmed },
+  { key: 'Packed', label: ORDER_FILTERS.packed },
+  { key: 'Ready for pick-up', label: ORDER_FILTERS.readyForPickUp },
+  { key: 'done', label: ORDER_FILTERS.done },
+  { key: 'all', label: ORDER_FILTERS.all }
 ];
 
 export function inFilter(status: OrderStatus, filter: OrderFilter): boolean {
@@ -379,41 +384,43 @@ export function countOrders(orders: Pick<IOrder, 'status'>[]): OrderCounts {
 export function summaryText(c: OrderCounts): string {
   if (!c.all) return '';
   const parts: string[] = [];
-  if (c.New) parts.push(`${c.New} new`);
-  if (c.Confirmed) parts.push(`${c.Confirmed} confirmed`);
-  if (c.Packed) parts.push(`${c.Packed} packed`);
-  if (c['Ready for pick-up']) parts.push(`${c['Ready for pick-up']} ready for pick-up`);
-  if (!parts.length) parts.push('Nothing open');
-  if (c.done) parts.push(`${c.done} done`);
-  return parts.join(' · ');
+  if (c.New) parts.push(ORDER_SUMMARY.new(c.New));
+  if (c.Confirmed) parts.push(ORDER_SUMMARY.confirmed(c.Confirmed));
+  if (c.Packed) parts.push(ORDER_SUMMARY.packed(c.Packed));
+  if (c['Ready for pick-up']) parts.push(ORDER_SUMMARY.readyForPickUp(c['Ready for pick-up']));
+  if (!parts.length) parts.push(ORDER_SUMMARY.nothingOpen);
+  if (c.done) parts.push(ORDER_SUMMARY.done(c.done));
+  return parts.join(ORDER_SUMMARY.between);
 }
 
 const FILTER_WORDS: Record<OrderFilter, string> = {
-  open: 'open orders',
-  New: 'new orders',
-  Confirmed: 'confirmed orders',
-  Packed: 'packed orders',
-  'Ready for pick-up': 'orders ready for pick-up',
-  done: 'shipped or picked-up orders',
-  all: 'orders'
+  open: FILTERED_ORDERS.open,
+  New: FILTERED_ORDERS.new,
+  Confirmed: FILTERED_ORDERS.confirmed,
+  Packed: FILTERED_ORDERS.packed,
+  'Ready for pick-up': FILTERED_ORDERS.readyForPickUp,
+  done: FILTERED_ORDERS.done,
+  all: FILTERED_ORDERS.all
 };
 
 const NOTHING_UNDER: Record<OrderFilter, string> = {
-  open: 'Nothing open — every order is done.',
-  New: 'No new orders.',
-  Confirmed: 'No orders are confirmed and waiting.',
-  Packed: 'Nothing is packed and waiting.',
-  'Ready for pick-up': 'Nothing is waiting to be picked up.',
-  done: 'Nothing has been shipped or picked up yet.',
-  all: 'No orders yet.'
+  open: ORDERS_EMPTY.open,
+  New: ORDERS_EMPTY.new,
+  Confirmed: ORDERS_EMPTY.confirmed,
+  Packed: ORDERS_EMPTY.packed,
+  'Ready for pick-up': ORDERS_EMPTY.readyForPickUp,
+  done: ORDERS_EMPTY.done,
+  all: ORDERS_EMPTY.noOrders
 };
 
 /** What to say when there is nothing to show. */
 export function emptyText(filter: OrderFilter, query: string, counts: OrderCounts): string {
-  if (!counts.all) return 'No orders yet.';
+  if (!counts.all) return ORDERS_EMPTY.noOrders;
   const q = query.trim();
   if (q) {
-    return `No ${FILTER_WORDS[filter]} match "${q}".` + (filter === 'all' ? '' : ' Try All to search every order.');
+    return filter === 'all'
+      ? ORDERS_EMPTY.noMatch(FILTER_WORDS[filter], q)
+      : ORDERS_EMPTY.noMatchTryAll(FILTER_WORDS[filter], q);
   }
   return NOTHING_UNDER[filter];
 }

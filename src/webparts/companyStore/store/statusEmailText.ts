@@ -17,6 +17,7 @@ import type { IFillIns, MessageKey } from './messages';
 import { dayText } from './dates';
 import { MY_ORDERS_HASH, readyByText, withoutHash } from './myOrdersView';
 import { trackingFor, trackingLabel } from './tracking';
+import { EMAIL_PROBLEMS, EMAIL_WORDS, STATUS_EMAIL } from '../strings/emails';
 
 export type StatusEmailKind = 'confirmed' | 'ready' | 'shipped';
 
@@ -49,8 +50,10 @@ export function statusEmailOpening(settings: IStoreSettings, kind: StatusEmailKi
 }
 
 /** What to say when an order has no email address to send to. */
-export const noEmailAddress = (who: string): string =>
-  `There's no email address for ${(who || '').trim() || 'whoever placed it'}, so no email went.`;
+export function noEmailAddress(who: string): string {
+  const name = (who || '').trim();
+  return name ? EMAIL_PROBLEMS.noAddress(name) : EMAIL_PROBLEMS.noAddressNoName;
+}
 
 /* -------------------------------------------------------------- body */
 
@@ -64,7 +67,7 @@ function whenReady(order: IOrder): string {
 
 function howToPickUp(settings: IStoreSettings): string {
   const note = (settings.pickUpNote || '').trim();
-  return note ? `<p style="${LABEL}">Pick up at the office</p>` + quietParagraph(note) : '';
+  return note ? `<p style="${LABEL}">${EMAIL_WORDS.pickUpHeading}</p>` + quietParagraph(note) : '';
 }
 
 /* "USPS tracking: 9400…" linked to the carrier's page, a pasted web address linked as it is, or plain text. */
@@ -74,13 +77,13 @@ function tracking(order: IOrder): string {
   const shown = t.href
     ? `<a href="${escapeHtml(t.href)}" style="${LINK}word-break:break-all;">${escapeHtml(t.text)}</a>`
     : escapeHtml(t.text);
-  return `<p style="${PARA}">${escapeHtml(trackingLabel(t))}: ${shown}</p>`;
+  return `<p style="${PARA}">${STATUS_EMAIL.tracking(escapeHtml(trackingLabel(t)), shown)}</p>`;
 }
 
 function sentTo(order: IOrder): string {
   const lines = order.shipTo.map(l => l.trim()).filter(Boolean);
   return lines.length
-    ? `<p style="${LABEL}">Sent to</p><p style="${PARA}">${lines.map(l => escapeHtml(l)).join('<br>')}</p>`
+    ? `<p style="${LABEL}">${STATUS_EMAIL.sentTo}</p><p style="${PARA}">${lines.map(l => escapeHtml(l)).join('<br>')}</p>`
     : '';
 }
 
@@ -97,19 +100,20 @@ function whatsNew(settings: IStoreSettings, kind: StatusEmailKind, order: IOrder
  */
 function whatTheyOrdered(settings: IStoreSettings, order: IOrder): string {
   if (order.lines.length) {
-    return `<p style="${LABEL}">What you ordered</p>` + itemsAndTotal(order.lines, order.total, settings);
+    return `<p style="${LABEL}">${STATUS_EMAIL.whatYouOrdered}</p>` + itemsAndTotal(order.lines, order.total, settings);
   }
   const items = order.itemLines.map(l => l.trim()).filter(Boolean);
   if (!items.length) return '';
-  return `<p style="${LABEL}">What you ordered</p>` +
+  const total = escapeHtml(formatMoney(order.total, settings.currency));
+  return `<p style="${LABEL}">${STATUS_EMAIL.whatYouOrdered}</p>` +
     `<p style="${PARA}">${items.map(l => escapeHtml(l)).join('<br>')}</p>` +
-    `<p style="${PARA}font-weight:bold;">Total: ${escapeHtml(formatMoney(order.total, settings.currency))}</p>`;
+    `<p style="${PARA}font-weight:bold;">${STATUS_EMAIL.total(total)}</p>`;
 }
 
 function myOrdersLink(storeUrl: string): string {
   // The link brings its own #, so anything after one already there would break it.
   const page = withoutHash(storeUrl || '').trim();
-  return page ? linkParagraph(page + MY_ORDERS_HASH, 'See your orders') : '';
+  return page ? linkParagraph(page + MY_ORDERS_HASH, STATUS_EMAIL.seeYourOrders) : '';
 }
 
 /** Everything after the opening: what's new, what they ordered, the link, the footer. Also shown in Customize. */
@@ -119,7 +123,7 @@ export function statusEmailDetails(
   return whatsNew(settings, kind, order) +
     whatTheyOrdered(settings, order) +
     myOrdersLink(storeUrl) +
-    `<p style="${FOOTER}">Sent by the company store. Reply to this email if you have any questions.</p>`;
+    `<p style="${FOOTER}">${STATUS_EMAIL.footer}</p>`;
 }
 
 /** The email body as HTML. Everything people typed is escaped. */

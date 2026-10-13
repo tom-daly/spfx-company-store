@@ -11,6 +11,7 @@ import { listOf } from './lists';
 import {
   IPlacedPhoto, IStockPlan, IStockRow, IStockWrite, Row, draftFromRows, placePhotos, planStock, stockRowFrom
 } from './productForm';
+import { SAVING_PRODUCT } from '../strings/storeData';
 
 /** One combination of a product: how many there are and, maybe, its own price. */
 export interface IStockLine {
@@ -290,17 +291,18 @@ export async function saveProduct(
           const url = window.location.origin + added.ServerRelativeUrl;
           done.push({ photo: u.photo, option: u.option, value: u.value, url });
         } catch (e) {
-          const choice = u.option === undefined || u.value === undefined
-            ? '' : ` for ${draft.options[u.option].values[u.value].value.trim()}`;
-          failed.push({ what: `the photo ${u.photo.file.name}${choice}`, why: explain(e) });
+          const what = u.option === undefined || u.value === undefined
+            ? SAVING_PRODUCT.photo(u.photo.file.name)
+            : SAVING_PRODUCT.photoFor(u.photo.file.name, draft.options[u.option].values[u.value].value.trim());
+          failed.push({ what, why: explain(e) });
         }
       });
     } catch (e) {
-      failed.push({ what: 'the new photos', why: explain(e) });
+      failed.push({ what: SAVING_PRODUCT.newPhotos, why: explain(e) });
     }
   }
-  if (failed.length === 1) problems.push(`${failed[0].what} (${failed[0].why})`);
-  if (failed.length > 1) problems.push(`${failed.length} of the new photos (${failed[0].why})`);
+  if (failed.length === 1) problems.push(SAVING_PRODUCT.withReason(failed[0].what, failed[0].why));
+  if (failed.length > 1) problems.push(SAVING_PRODUCT.somePhotos(failed.length, failed[0].why));
 
   // Each photo that went up slots into its list at the place it was given in the form.
   const placed = (option?: number, value?: number): IPlacedPhoto[] =>
@@ -322,7 +324,7 @@ export async function saveProduct(
     try {
       await products.items.getById(id).update(after);
     } catch (e) {
-      problems.push(`the new photos (${explain(e)})`);
+      problems.push(SAVING_PRODUCT.withReason(SAVING_PRODUCT.newPhotos, explain(e)));
     }
   }
 
@@ -332,12 +334,11 @@ export async function saveProduct(
     // Last, so nothing is taken away unless everything else went in.
     await fewAtATime(plan.remove, rowId => stock.items.getById(rowId).recycle());
   } catch (e) {
-    problems.push(`the stock numbers (${explain(e)})`);
+    problems.push(SAVING_PRODUCT.stock(explain(e)));
   }
 
   if (problems.length) {
-    const e: IPartlySaved = new Error(`${name} was saved, but ${problems.join(' and ')} didn't go in. ` +
-      'Save again to try once more, or fix it in the Products or Stock list.');
+    const e: IPartlySaved = new Error(SAVING_PRODUCT.partlySaved(name, problems));
     e.productId = id;
     e.uploaded = uploaded;
     throw e;

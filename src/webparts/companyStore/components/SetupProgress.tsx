@@ -2,6 +2,8 @@ import * as React from 'react';
 import { DefaultButton, Icon, PrimaryButton, ProgressIndicator, Spinner, SpinnerSize } from '@fluentui/react';
 import styles from './CompanyStore.module.scss';
 import type { IStep, StepState } from '../setup/plan';
+import { COMMON } from '../strings/common';
+import { SETUP_PROGRESS } from '../strings/setup';
 
 /* The Fluent icon in each step's coloured circle. */
 const MARK: Record<StepState, string> = {
@@ -10,15 +12,6 @@ const MARK: Record<StepState, string> = {
   done: 'CheckMark',
   failed: 'Important',
   skipped: 'Remove'
-};
-
-/* Read out by screen readers in place of the coloured marks. */
-const SAY: Record<StepState, string> = {
-  waiting: 'to do',
-  running: 'in progress',
-  done: 'done',
-  failed: 'failed',
-  skipped: 'skipped'
 };
 
 const settled = (s: IStep): boolean => s.state === 'done' || s.state === 'failed' || s.state === 'skipped';
@@ -32,16 +25,16 @@ export interface ISetupProgressProps {
 }
 
 const SetupProgress: React.FC<ISetupProgressProps> = ({ steps, finished, onDone, onRetry }) => {
-  if (!steps) return <Spinner size={SpinnerSize.large} label="Checking what is already there…" />;
+  if (!steps) return <Spinner size={SpinnerSize.large} label={SETUP_PROGRESS.checking} />;
 
   const total = steps.length;
   const doneCount = steps.filter(settled).length;
   const notDone = steps.filter(s => s.state === 'failed' || s.state === 'skipped');
   const current = steps.filter(s => s.state === 'running')[0];
 
-  const heading = !finished ? 'Setting up the store'
-    : notDone.length ? 'Setup didn\'t finish'
-    : 'The store is set up';
+  const heading = !finished ? SETUP_PROGRESS.workingTitle
+    : notDone.length ? SETUP_PROGRESS.notFinishedTitle
+    : SETUP_PROGRESS.doneTitle;
 
   return (
     <div className={styles.setup}>
@@ -50,17 +43,13 @@ const SetupProgress: React.FC<ISetupProgressProps> = ({ steps, finished, onDone,
       {!finished && (
         <ProgressIndicator
           percentComplete={total ? doneCount / total : 0}
-          description={`Step ${Math.min(doneCount + 1, total)} of ${total}`}
+          description={SETUP_PROGRESS.stepOf(Math.min(doneCount + 1, total), total)}
         />
       )}
       {finished && notDone.length === 0 && (
-        <p>{total ? `All ${total} steps are done.` : 'Nothing needed doing.'}</p>
+        <p>{total ? SETUP_PROGRESS.allDone(total) : SETUP_PROGRESS.nothingToDo}</p>
       )}
-      {finished && notDone.length > 0 && (
-        <p>
-          {notDone.length} of {total} steps didn&apos;t work. Trying again picks up where it stopped.
-        </p>
-      )}
+      {finished && notDone.length > 0 && <p>{SETUP_PROGRESS.someFailed(notDone.length, total)}</p>}
 
       <span className={styles.srOnly} role="status">
         {current ? current.label : finished ? heading : ''}
@@ -75,7 +64,7 @@ const SetupProgress: React.FC<ISetupProgressProps> = ({ steps, finished, onDone,
             </span>
             <span className={styles.stepText}>
               {s.label}
-              <span className={styles.srOnly}> — {SAY[s.state]}</span>
+              <span className={styles.srOnly}>{SETUP_PROGRESS.stepState(s.state)}</span>
               {s.error && <span className={styles.stepError}>{s.error}</span>}
             </span>
           </li>
@@ -86,11 +75,11 @@ const SetupProgress: React.FC<ISetupProgressProps> = ({ steps, finished, onDone,
         <div className={styles.actions}>
           {notDone.length > 0 ? (
             <>
-              <PrimaryButton text="Try again" onClick={onRetry} />
-              <DefaultButton text="Close" onClick={onDone} />
+              <PrimaryButton text={COMMON.tryAgain} onClick={onRetry} />
+              <DefaultButton text={COMMON.close} onClick={onDone} />
             </>
           ) : (
-            <PrimaryButton text="Open the store" onClick={onDone} />
+            <PrimaryButton text={SETUP_PROGRESS.openStore} onClick={onDone} />
           )}
         </div>
       )}

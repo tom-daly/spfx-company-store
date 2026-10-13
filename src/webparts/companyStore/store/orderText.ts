@@ -6,6 +6,7 @@
 import { ONE_SIZE } from './types';
 import type { DeliveryMethod, IAddress, ICartLine, IOrderRequest } from './types';
 import type { IStoreSettings } from './settings';
+import { LIST_WORDS, ORDER_CHECKS, YOUR_ADDRESS_PARTS } from '../strings/orderWords';
 
 /** "CS-" and 42 make CS-0042. Numbers past 9999 just get longer. */
 export function orderNumber(prefix: string, id: number): string {
@@ -80,7 +81,7 @@ export function orderData(lines: ICartLine[], method: DeliveryMethod, address?: 
 /** "a", "a and b", "a, b and c" (or "a, b or c"). */
 export function inWords(items: string[], joiner: 'and' | 'or' = 'and'): string {
   if (items.length < 2) return items.join('');
-  return `${items.slice(0, -1).join(', ')} ${joiner} ${items[items.length - 1]}`;
+  return LIST_WORDS[joiner](items.slice(0, -1).join(LIST_WORDS.between), items[items.length - 1]);
 }
 
 /** What to call each part a delivery address can't go without, when asking for it. */
@@ -95,13 +96,7 @@ export interface IAddressWords {
 const NEEDED: (keyof IAddressWords)[] = ['name', 'line1', 'postcode', 'city', 'country'];
 
 /* Worded for the person ordering, who is filling in their own address. */
-const YOUR_WORDS: IAddressWords = {
-  name: 'your full name',
-  line1: 'the first line of the address',
-  postcode: 'the postcode',
-  city: 'the city',
-  country: 'the country'
-};
+const YOUR_WORDS: IAddressWords = YOUR_ADDRESS_PARTS;
 
 const emptyParts = (a?: IAddress): (keyof IAddressWords)[] => NEEDED.filter(key => !a || !trim(a[key]));
 
@@ -119,24 +114,20 @@ export const missingWords = (a: IAddress | undefined, words: IAddressWords): str
 export function checkAddress(a?: IAddress, words: IAddressWords = YOUR_WORDS): string | undefined {
   const missing = missingWords(a, words);
   if (!missing.length) return undefined;
-  return `Please add ${inWords(missing)} so we know where to send it.`;
+  return ORDER_CHECKS.addressMissing(inWords(missing));
 }
 
 /** Why this order can't be placed as it is, or undefined if it can. */
 export function checkOrder(request: IOrderRequest, settings: IStoreSettings): string | undefined {
-  if (!request.lines.length || itemCount(request.lines) <= 0) return 'Your cart is empty.';
-  if (request.method === 'Pick up' && !settings.pickUp) {
-    return "Picking up at the office isn't available right now. Please choose delivery.";
-  }
-  if (request.method === 'Delivery' && !settings.delivery) {
-    return "Delivery isn't available right now. Please choose pick-up.";
-  }
+  if (!request.lines.length || itemCount(request.lines) <= 0) return ORDER_CHECKS.cartEmpty;
+  if (request.method === 'Pick up' && !settings.pickUp) return ORDER_CHECKS.pickUpOff;
+  if (request.method === 'Delivery' && !settings.delivery) return ORDER_CHECKS.deliveryOff;
   if (request.method === 'Delivery') return checkAddress(request.address);
   return undefined;
 }
 
 /** Said when there aren't enough left to cover a line. */
 export function notEnoughMessage(line: ICartLine, left: number): string {
-  if (left <= 0) return `${lineName(line)} has just sold out. Take it out of your cart and try again.`;
-  return `Only ${left} ${lineName(line)} left. Change your cart and try again.`;
+  if (left <= 0) return ORDER_CHECKS.soldOut(lineName(line));
+  return ORDER_CHECKS.notEnough(left, lineName(line));
 }

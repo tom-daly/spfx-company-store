@@ -1,6 +1,7 @@
 import type { INewPhoto, IProductDraft, IProductFiles, IStockLine, IValuePhoto } from './products';
 import { IOption, ONE_SIZE } from './types';
 import { Combo, allCombos, variantLabel } from './variants';
+import { SAMPLE_PICTURES } from '../strings/storeData';
 
 /*
  * The eight products from the clickable mockup, for trying the store out. Most
@@ -200,13 +201,13 @@ function drawSamplePhoto(s: ISample, view: View = 'Front', fill?: string): Promi
       canvas.height = 600;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        reject(new Error('This browser cannot draw the sample pictures.'));
+        reject(new Error(SAMPLE_PICTURES.cannotDraw));
         return;
       }
       ctx.drawImage(img, 0, 0, 800, 600);
-      canvas.toBlob(b => (b ? resolve(b) : reject(new Error('The sample picture did not draw.'))), 'image/png');
+      canvas.toBlob(b => (b ? resolve(b) : reject(new Error(SAMPLE_PICTURES.didNotDraw))), 'image/png');
     };
-    img.onerror = () => reject(new Error('The sample picture did not draw.'));
+    img.onerror = () => reject(new Error(SAMPLE_PICTURES.didNotDraw));
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sampleSvg(s, view, fill));
   });
 }

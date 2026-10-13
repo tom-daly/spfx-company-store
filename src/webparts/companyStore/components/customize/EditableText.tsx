@@ -1,6 +1,7 @@
 import * as React from 'react';
 import styles from './Customize.module.scss';
 import { FILL_INS, MessageKey } from '../../store/messages';
+import { EDITABLE } from '../../strings/customize';
 
 /**
  * How a screen shows a message an owner can change. Normally it's just the text;
@@ -69,10 +70,10 @@ const EditableText: React.FC<IEditableTextProps> = props => {
     return (
       <button
         type="button" className={styles.editable} onClick={start}
-        aria-label={`${label}: ${shown || 'empty'}. Click to change.`}
+        aria-label={EDITABLE.label(label, shown || EDITABLE.empty)}
       >
         <span className={shown ? styles.shown : styles.empty}>{shown || emptyText}</span>
-        <span className={styles.editBadge} aria-hidden="true">Edit</span>
+        <span className={styles.editBadge} aria-hidden="true">{EDITABLE.editBadge}</span>
       </button>
     );
   }
@@ -102,7 +103,7 @@ const EditableText: React.FC<IEditableTextProps> = props => {
       <span className={styles.tools}>
         {fillIns && (
           <span className={styles.fillIns}>
-            Add:
+            {EDITABLE.addFillIn}
             {FILL_INS.map(f => (
               // onMouseDown keeps the cursor in the box, so the fill-in lands where it was.
               <button key={f} type="button" className={styles.chip}
@@ -112,10 +113,10 @@ const EditableText: React.FC<IEditableTextProps> = props => {
         )}
         {value !== standard && (
           <button type="button" className={styles.linkish} onClick={() => onChange(standard)}>
-            Use the standard wording
+            {EDITABLE.useStandard}
           </button>
         )}
-        <button type="button" className={styles.done} onClick={() => setEditing(false)}>Done</button>
+        <button type="button" className={styles.done} onClick={() => setEditing(false)}>{EDITABLE.done}</button>
       </span>
     </span>
   );

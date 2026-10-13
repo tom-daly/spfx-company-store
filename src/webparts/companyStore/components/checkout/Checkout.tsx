@@ -21,6 +21,8 @@ import { itemCountText } from '../../store/ordersView';
 import type { INotice } from '../notice';
 import BackArrow from '../BackArrow';
 import AddressFields from './AddressFields';
+import { COMMON } from '../../strings/common';
+import { CHECKOUT } from '../../strings/checkout';
 
 export interface ICheckoutProps {
   sp: SPFI;
@@ -90,9 +92,9 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
       setRemember(false);
       setShowMissing(false);
       setAddress(blankAddress(site.user.name));
-      setAddressNotice({ type: MessageBarType.success, text: "We've forgotten your saved address." });
+      setAddressNotice({ type: MessageBarType.success, text: CHECKOUT.addressForgotten });
     } catch (e) {
-      setAddressNotice({ type: MessageBarType.error, text: `Your saved address couldn't be removed. ${explain(e)}` });
+      setAddressNotice({ type: MessageBarType.error, text: CHECKOUT.forgetFailed(explain(e)) });
     } finally {
       setForgetting(false);
     }
@@ -105,7 +107,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
       setShowMissing(true);
       return;
     }
-    setWorking('Placing your order…');
+    setWorking(CHECKOUT.placing);
 
     let order: IPlacedOrder;
     try {
@@ -124,7 +126,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
 
     let emailSent = false;
     if (emailsOn) {
-      setWorking('Sending your confirmation email…');
+      setWorking(CHECKOUT.sendingEmail);
       let whyNot = '';
       try {
         await sendOrderEmail(getGraph, settings, order, site.user, ordersListUrl(site));
@@ -141,7 +143,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
   };
 
   const backLink = (
-    <Link className={styles.backLink} onClick={onBack} disabled={busy}><BackArrow />Back to the store</Link>
+    <Link className={styles.backLink} onClick={onBack} disabled={busy}><BackArrow />{CHECKOUT.back}</Link>
   );
 
   if (!lines.length) {
@@ -149,7 +151,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
       <div>
         {backLink}
         <div className={styles.empty}>
-          <p>Your cart is empty. Add something from the store first.</p>
+          <p>{CHECKOUT.emptyCart}</p>
         </div>
       </div>
     );
@@ -167,13 +169,13 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
       <div className={styles.twoUp}>
         <div className={styles.main}>
           <div className={styles.box}>
-            <h2 className={styles.heading}>How do you want it?</h2>
+            <h2 className={styles.heading}>{CHECKOUT.methodTitle}</h2>
             {options.length > 1 && (
-              <p className={styles.hint}>Pick one. We only need an address if it&apos;s coming to you.</p>
+              <p className={styles.hint}>{CHECKOUT.methodHint}</p>
             )}
             {options.length === 0 ? (
               <MessageBar messageBarType={MessageBarType.warning} isMultiline>
-                The store isn&apos;t taking orders right now: pick-up and delivery are both turned off.
+                {CHECKOUT.noMethods}
               </MessageBar>
             ) : (
               <MethodChoices
@@ -184,9 +186,9 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
 
           {delivering && (
             <div className={styles.box}>
-              <h2 className={styles.heading}>Where it goes</h2>
+              <h2 className={styles.heading}>{CHECKOUT.addressTitle}</h2>
               <p className={styles.hint}>
-                {hasSaved ? "Your saved address. Change anything that's out of date." : 'The address for the parcel.'}
+                {hasSaved ? CHECKOUT.savedAddressHint : CHECKOUT.addressHint}
               </p>
               <AddressFields
                 address={address} onChange={setField} missing={missing} disabled={busy} autoFill
@@ -194,19 +196,19 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
               />
               <div className={styles.addressActions}>
                 <Checkbox
-                  label="Remember this address for next time" checked={remember} disabled={busy}
+                  label={CHECKOUT.rememberAddress} checked={remember} disabled={busy}
                   onChange={(_, checked) => setRemember(!!checked)}
                 />
                 {hasSaved && (
                   <Link disabled={busy || forgetting} onClick={() => { forget().catch(() => undefined); }}>
-                    {forgetting ? 'Forgetting…' : 'Forget my saved address'}
+                    {forgetting ? CHECKOUT.forgetting : CHECKOUT.forgetAddress}
                   </Link>
                 )}
               </div>
               {addressNotice && (
                 <MessageBar
                   className={styles.addressNotice} messageBarType={addressNotice.type} isMultiline
-                  onDismiss={() => setAddressNotice(undefined)} dismissButtonAriaLabel="Close"
+                  onDismiss={() => setAddressNotice(undefined)} dismissButtonAriaLabel={COMMON.close}
                 >
                   {addressNotice.text}
                 </MessageBar>
@@ -215,10 +217,10 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
           )}
 
           <div className={styles.box}>
-            <h2 className={styles.heading}>Anything else?</h2>
-            <p className={styles.hint}>Optional. Goes with your order.</p>
+            <h2 className={styles.heading}>{CHECKOUT.noteTitle}</h2>
+            <p className={styles.hint}>{CHECKOUT.noteHint}</p>
             <TextField
-              multiline rows={2} ariaLabel="Anything else?" placeholder="A note for the store team"
+              multiline rows={2} ariaLabel={CHECKOUT.noteTitle} placeholder={CHECKOUT.notePlaceholder}
               value={note} onChange={(_, v) => setNote(v || '')} disabled={busy}
             />
           </div>
@@ -226,7 +228,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
 
         <div className={styles.side}>
           <div className={styles.box}>
-            <h2 className={styles.heading}>Your order</h2>
+            <h2 className={styles.heading}>{CHECKOUT.summaryTitle}</h2>
             <p className={styles.hint}>{itemCountText(count)}</p>
             <ul className={styles.lines}>
               {lines.map(l => (
@@ -236,7 +238,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
                     : <span className={styles.thumb} aria-hidden="true" />}
                   <span className={styles.lineMid}>
                     <span className={styles.lineName}>{lineName(l)}</span>
-                    <span className={styles.lineMeta}>Qty {l.qty}</span>
+                    <span className={styles.lineMeta}>{CHECKOUT.quantity(l.qty)}</span>
                   </span>
                   <span className={styles.linePrice}>{formatMoney(lineTotal(l), settings.currency)}</span>
                 </li>
@@ -244,9 +246,9 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
             </ul>
             <div className={styles.totals}>
               <div><span>{itemCountText(count)}</span><span>{formatMoney(total, settings.currency)}</span></div>
-              <div className={styles.grand}><span>Total</span><span>{formatMoney(total, settings.currency)}</span></div>
+              <div className={styles.grand}><span>{COMMON.total}</span><span>{formatMoney(total, settings.currency)}</span></div>
             </div>
-            {total === 0 && <p className={styles.free}>Nothing to pay {'—'} the company covers these.</p>}
+            {total === 0 && <p className={styles.free}>{CHECKOUT.free}</p>}
 
             {problem && (
               <MessageBar className={styles.error} messageBarType={MessageBarType.error} isMultiline>
@@ -255,7 +257,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
             )}
 
             <PrimaryButton
-              className={styles.place} text="Place order" disabled={busy || !method}
+              className={styles.place} text={CHECKOUT.placeOrder} disabled={busy || !method}
               onClick={() => { place().catch(() => undefined); }}
             />
             {working && (
@@ -263,7 +265,7 @@ const Checkout: React.FC<ICheckoutProps> = ({ sp, ids, site, settings, getGraph,
             )}
             {emailsOn && (
               <p className={styles.after}>
-                You&apos;ll get a confirmation email, and the store team is told straight away.
+                {CHECKOUT.emailPromise}
               </p>
             )}
           </div>

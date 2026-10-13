@@ -8,6 +8,7 @@ import { IOrder, OrderStatus, statusesFor } from './ordersView';
 import { dayText, whenText } from './dates';
 import { itemText } from './orderText';
 import { fillInsFor, message } from './messages';
+import { ORDER_PROGRESS, ORDER_STEPS } from '../strings/orderWords';
 
 /** Put after the store page's address, it opens My orders straight away. The status emails link there. */
 export const MY_ORDERS_HASH = '#my-orders';
@@ -30,7 +31,14 @@ export interface IStep {
 }
 
 /* "New" means something to the store team; to the person who ordered, it has been placed. */
-const STEP_LABELS: Partial<Record<OrderStatus, string>> = { New: 'Placed' };
+const STEP_LABELS: Record<OrderStatus, string> = {
+  New: ORDER_STEPS.new,
+  Confirmed: ORDER_STEPS.confirmed,
+  Packed: ORDER_STEPS.packed,
+  Shipped: ORDER_STEPS.shipped,
+  'Ready for pick-up': ORDER_STEPS.readyForPickUp,
+  'Picked up': ORDER_STEPS.pickedUp
+};
 
 export const stepLabel = (status: OrderStatus): string => STEP_LABELS[status] || status;
 
@@ -51,7 +59,7 @@ export function orderSteps(order: Pick<IOrder, 'method' | 'status'>): IStep[] {
 
 /** Read out after a step's name. The step it is at now needs nothing: the page marks it as the current one. */
 export const stepStateText = (state: StepState): string =>
-  state === 'done' ? 'done' : state === 'todo' ? 'still to come' : '';
+  state === 'done' ? ORDER_STEPS.stepDone : state === 'todo' ? ORDER_STEPS.stepToCome : '';
 
 /* ------------------------------------------------------- where it's at */
 
@@ -61,7 +69,7 @@ export const stepStateText = (state: StepState): string =>
  * status emails say it the same way.
  */
 export const readyByText = (method: DeliveryMethod, day: string): string =>
-  method === 'Pick up' ? `Ready for pick-up by ${day}.` : `We expect to send it by ${day}.`;
+  method === 'Pick up' ? ORDER_PROGRESS.readyForPickUpBy(day) : ORDER_PROGRESS.sendBy(day);
 
 /** One line on where the order has got to. */
 export function whereItsAt(order: Pick<IOrder, 'method' | 'status' | 'readyBy' | 'pickedUpOn'>): string {
@@ -69,23 +77,21 @@ export function whereItsAt(order: Pick<IOrder, 'method' | 'status' | 'readyBy' |
   switch (order.status) {
     case 'Confirmed': {
       const by = dayText(order.readyBy);
-      if (by) return `Confirmed. ${readyByText(order.method, by)}`;
-      return pickUp
-        ? "Confirmed. We're working on it and will email you when it's ready."
-        : "Confirmed. We're working on it and will email you when it's on its way.";
+      if (by) return ORDER_PROGRESS.confirmedBy(readyByText(order.method, by));
+      return pickUp ? ORDER_PROGRESS.confirmedPickUp : ORDER_PROGRESS.confirmedDelivery;
     }
     case 'Packed':
-      return 'Packed and waiting to be sent.';
+      return ORDER_PROGRESS.packed;
     case 'Ready for pick-up':
-      return 'Ready for pick-up.';
+      return ORDER_PROGRESS.ready;
     case 'Shipped':
-      return 'On its way.';
+      return ORDER_PROGRESS.shipped;
     case 'Picked up': {
       const on = dayText(order.pickedUpOn);
-      return on ? `Picked up on ${on}.` : 'Picked up.';
+      return on ? ORDER_PROGRESS.pickedUpOn(on) : ORDER_PROGRESS.pickedUp;
     }
     default:
-      return "We've got your order. We'll confirm it soon.";
+      return ORDER_PROGRESS.received;
   }
 }
 
@@ -108,4 +114,4 @@ export const itemTexts = (order: Pick<IOrder, 'lines' | 'itemLines'>): string[] 
 
 /** "Placed 4 Oct 2026 at 3:30 PM", or empty when SharePoint's date couldn't be read. */
 export const placedText = (order: Pick<IOrder, 'placed'>): string =>
-  order.placed ? `Placed ${whenText(order.placed)}` : '';
+  order.placed ? ORDER_PROGRESS.placed(whenText(order.placed)) : '';

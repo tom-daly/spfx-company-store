@@ -13,6 +13,7 @@ import type { IHistoryEntry } from './orderHistory';
 import type { IOrderEdit } from './orderEdits';
 import { blankAddress, inWords, lineName, missingWords, orderTotal, tidyAddress } from './orderText';
 import type { IAddressWords } from './orderText';
+import { FORM_ADDRESS_PARTS, ORDER_EDIT_CHECKS } from '../strings/orderWords';
 
 /** One line of the order in the form: the line as it was ordered, and its quantity as typed. */
 export interface IFormItem {
@@ -90,32 +91,23 @@ export const quantitiesChanged = (form: IOrderForm): boolean =>
 export const formTotal = (form: IOrderForm, order: IOrder): number =>
   quantitiesChanged(form) ? orderTotal(newLines(form)) : order.total;
 
-const PART_WORDS: IAddressWords = {
-  name: 'the full name',
-  line1: 'address line 1',
-  postcode: 'the postcode',
-  city: 'the city',
-  country: 'the country'
-};
+const PART_WORDS: IAddressWords = FORM_ADDRESS_PARTS;
 
 /** What a delivery address still needs, in plain words, or undefined if nothing. */
 export function addressProblem(address: IAddress): string | undefined {
   const missing = missingWords(address, PART_WORDS);
   if (!missing.length) return undefined;
-  return `For delivery, add ${inWords(missing)}.`;
+  return ORDER_EDIT_CHECKS.addressMissing(inWords(missing));
 }
 
 /** The changes to save, or what is wrong with the form in plain words. */
 export function editFromForm(form: IOrderForm): IOrderEdit | string {
   const unreadable = form.items.filter(item => readCount(item.qty) === undefined);
   if (unreadable.length) {
-    const names = inWords(unreadable.map(item => lineName(item.line)));
-    return `Quantities need to be whole numbers, 0 or more. Check ${names}.`;
+    return ORDER_EDIT_CHECKS.quantitiesNotNumbers(inWords(unreadable.map(item => lineName(item.line))));
   }
   const lines = newLines(form);
-  if (lines.length && lines.every(l => l.qty === 0)) {
-    return 'Every quantity is 0, which would leave nothing on the order. Keep at least one item on it.';
-  }
+  if (lines.length && lines.every(l => l.qty === 0)) return ORDER_EDIT_CHECKS.allZero;
   const delivery = form.method === 'Delivery';
   if (delivery) {
     const problem = addressProblem(form.address);

@@ -5,6 +5,8 @@
  * can be added later without touching the list.
  */
 
+import { CURRENCY_NAMES, EMAIL_NAMES, MONEY_WORDS, SETTINGS_CHECKS } from '../strings/settingsWords';
+
 export type Currency = 'USD' | 'EUR' | 'GBP';
 
 export interface ICurrency {
@@ -17,9 +19,9 @@ export interface ICurrency {
 }
 
 export const CURRENCIES: ICurrency[] = [
-  { code: 'USD', label: 'US dollar ($)', locale: 'en-US', lcid: 1033 },
-  { code: 'EUR', label: 'Euro (€)', locale: 'en-IE', lcid: 6153 },
-  { code: 'GBP', label: 'British pound (£)', locale: 'en-GB', lcid: 2057 }
+  { code: 'USD', label: CURRENCY_NAMES.usd, locale: 'en-US', lcid: 1033 },
+  { code: 'EUR', label: CURRENCY_NAMES.eur, locale: 'en-IE', lcid: 6153 },
+  { code: 'GBP', label: CURRENCY_NAMES.gbp, locale: 'en-GB', lcid: 2057 }
 ];
 
 export const currencyInfo = (code: Currency): ICurrency =>
@@ -126,32 +128,33 @@ export const sendsOrderEmails = (settings: IStoreSettings): boolean => splitEmai
 
 /* Each email's subject, and the email as Customize names it. */
 const SUBJECTS: ['emailSubject' | 'confirmedSubject' | 'readySubject' | 'shippedSubject', string][] = [
-  ['emailSubject', 'New order'],
-  ['confirmedSubject', 'Order confirmed'],
-  ['readySubject', 'Ready for pick-up'],
-  ['shippedSubject', 'On its way']
+  ['emailSubject', EMAIL_NAMES.order],
+  ['confirmedSubject', EMAIL_NAMES.confirmed],
+  ['readySubject', EMAIL_NAMES.ready],
+  ['shippedSubject', EMAIL_NAMES.shipped]
 ];
+
+/* The longest an email's subject can be. */
+const MOST_SUBJECT = 200;
 
 /** Whether a setting is an email's subject, which an email can't go without. */
 export const isSubject = (key: keyof IStoreSettings): boolean => SUBJECTS.some(([subject]) => subject === key);
 
 /** What is wrong with these settings, in plain words, or undefined if nothing. */
 export function checkSettings(s: IStoreSettings): string | undefined {
-  if (!/^[A-Za-z0-9-]{0,10}$/.test(s.orderPrefix)) {
-    return 'Order numbers can start with up to 10 letters, numbers or dashes, like CS-.';
-  }
+  if (!/^[A-Za-z0-9-]{0,10}$/.test(s.orderPrefix)) return SETTINGS_CHECKS.orderPrefix;
   const bad = splitEmails(s.orderEmails).filter(e => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
-  if (bad.length) return `${bad.join(', ')} ${bad.length === 1 ? "doesn't look like an email address" : "don't look like email addresses"}.`;
-  if (!s.pickUp && !s.delivery) return 'Turn on pick-up, delivery or both, or nobody can get their order.';
-  const long = SUBJECTS.filter(([key]) => s[key].length > 200)[0];
-  if (long) return `Keep the subject of the "${long[1]}" email under 200 characters.`;
+  if (bad.length) return SETTINGS_CHECKS.badEmails(bad);
+  if (!s.pickUp && !s.delivery) return SETTINGS_CHECKS.noMethod;
+  const long = SUBJECTS.filter(([key]) => s[key].length > MOST_SUBJECT)[0];
+  if (long) return SETTINGS_CHECKS.subjectTooLong(long[1], MOST_SUBJECT);
   return undefined;
 }
 
 /* ---------------------------------------------------------------- money */
 
 export function formatMoney(amount: number, currency: Currency): string {
-  if (amount === 0) return 'Free';
+  if (amount === 0) return MONEY_WORDS.free;
   return new Intl.NumberFormat(currencyInfo(currency).locale, { style: 'currency', currency }).format(amount);
 }
 
