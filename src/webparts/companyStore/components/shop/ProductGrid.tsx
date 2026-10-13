@@ -4,7 +4,8 @@ import styles from './Shop.module.scss';
 import type { IProduct } from '../../store/types';
 import type { Currency } from '../../store/settings';
 import { matchesSearch, priceText, stockLabel } from '../../store/shopText';
-import { countText } from '../../store/orderText';
+import { countText } from '../../strings/plural';
+import { PRODUCTS } from '../../strings/common';
 import Photo from './Photo';
 
 export interface IProductGridProps {
@@ -70,7 +71,7 @@ const ProductGrid: React.FC<IProductGridProps> = (
   return (
     <>
       <p className={styles.srOnly} aria-live="polite">
-        {searching ? `${countText(found.length, 'product')} found` : ''}
+        {searching ? `${countText(found.length, PRODUCTS)} found` : ''}
       </p>
       {found.length === 0 ? (
         <div className={styles.empty}>

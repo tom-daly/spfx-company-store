@@ -7,7 +7,9 @@
 import { DONE_STATUSES, ORDER_STATUSES } from '../setup/schema';
 import { ONE_SIZE } from './types';
 import type { DeliveryMethod, IAddress, ICartLine } from './types';
-import { countText, itemCount, lineName, orderTotal, shipToText } from './orderText';
+import { itemCount, lineName, orderTotal, shipToText } from './orderText';
+import { countText } from '../strings/plural';
+import { ITEMS } from '../strings/common';
 import { IHistoryEntry, parseHistory } from './orderHistory';
 import { isIsoDate } from './dates';
 import { matchesWords } from './shopText';
@@ -271,7 +273,7 @@ export const withStatus = (orders: IOrder[], id: number, status: OrderStatus): I
 /* ------------------------------------------------------------------ words */
 
 /** "1 item", "3 items". */
-export const itemCountText = (n: number): string => countText(n, 'item');
+export const itemCountText = (n: number): string => countText(n, ITEMS);
 
 /** What to call the person in a few words: their first name, or their email when that's all there is. */
 export function firstNameOf(order: Pick<IOrder, 'who'>): string {

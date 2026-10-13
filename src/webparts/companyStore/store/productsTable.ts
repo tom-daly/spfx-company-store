@@ -1,6 +1,7 @@
 import type { IOption, IProduct } from './types';
 import { StockLevel, matchesSearch, stockLabel, stockLeft } from './shopText';
-import { countText } from './orderText';
+import { countText } from '../strings/plural';
+import { COMBINATIONS, PRODUCTS } from '../strings/common';
 
 /*
  * The owners' Products & stock page, kept apart from SharePoint so it can be
@@ -39,7 +40,7 @@ export function filterCounts(products: IProduct[]): FilterCounts {
 /** "12 products · 3 running low · 2 out of stock · 1 off". Anything there's none of is left out. */
 export function summaryText(products: IProduct[]): string {
   const c = filterCounts(products);
-  const parts = [countText(c.all, 'product')];
+  const parts = [countText(c.all, PRODUCTS)];
   if (c.low) parts.push(`${c.low} running low`);
   if (c.out) parts.push(`${c.out} out of stock`);
   if (c.off) parts.push(`${c.off} off`);
@@ -58,7 +59,7 @@ export function combinationsText(p: Pick<IProduct, 'options' | 'variants'>): str
   if (!p.options.length) return undefined;
   const all = p.variants.length;
   const out = p.variants.filter(v => stockLeft(v.inStock) === 0).length;
-  const text = countText(all, 'combination');
+  const text = countText(all, COMBINATIONS);
   // Every one out shows as 0 already.
   return out > 0 && out < all ? `${text}, ${out} out` : text;
 }

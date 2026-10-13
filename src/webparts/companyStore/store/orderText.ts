@@ -83,9 +83,6 @@ export function inWords(items: string[], joiner: 'and' | 'or' = 'and'): string {
   return `${items.slice(0, -1).join(', ')} ${joiner} ${items[items.length - 1]}`;
 }
 
-/** "1 item", "3 items": a count and the word for what's counted, plural when it isn't 1. */
-export const countText = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
-
 /** What to call each part a delivery address can't go without, when asking for it. */
 export interface IAddressWords {
   name: string;

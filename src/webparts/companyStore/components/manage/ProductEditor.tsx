@@ -15,7 +15,8 @@ import {
 } from '../../store/productForm';
 import { Combo, MAX_OPTIONS, checkOptions } from '../../store/variants';
 import { Currency, currencySymbol, formatMoney } from '../../store/settings';
-import { countText } from '../../store/orderText';
+import { countText } from '../../strings/plural';
+import { PHOTOS } from '../../strings/common';
 import { explain } from '../../setup/errors';
 import StockEditor, { CellChange } from './StockGrid';
 import { ConfirmDelete } from './ProductsPage';
@@ -147,7 +148,7 @@ const PhotoTile: React.FC<IPhotoTileProps> = ({ photos, previews, of, open, onAd
   }
   const first = photos[0];
   const src = first.url || previews[first.key];
-  const many = countText(photos.length, 'photo');
+  const many = countText(photos.length, PHOTOS);
   const verb = open ? 'Hide' : 'Show';
   return (
     <button

@@ -4,7 +4,8 @@ import styles from './StockGrid.module.scss';
 import type { IOption } from '../../store/types';
 import type { Combo } from '../../store/variants';
 import { IFormLine, IFormRow, IStockTable, readCount, totalStock } from '../../store/productForm';
-import { countText } from '../../store/orderText';
+import { countText } from '../../strings/plural';
+import { COMBINATIONS } from '../../strings/common';
 
 /** What changed in one combination's boxes. */
 export type CellChange = Partial<Pick<IFormLine, 'inStock' | 'price'>>;
@@ -189,7 +190,7 @@ const StockEditor: React.FC<IStockEditorProps> = ({ table, usual, prices, onPric
   return (
     <div className={styles.stock}>
       <p className={styles.hint}>
-        {`${countText(count, 'combination')}. `}Set how many of each you have.
+        {`${countText(count, COMBINATIONS)}. `}Set how many of each you have.
       </p>
       <div className={styles.tools}>
         <Checkbox

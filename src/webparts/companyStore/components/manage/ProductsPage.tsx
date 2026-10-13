@@ -22,7 +22,8 @@ import {
   ProductFilter, combinationsText, filterCounts, filterProducts, nothingText, stockLevel, summaryText, totalLeft,
   variesText
 } from '../../store/productsTable';
-import { countText } from '../../store/orderText';
+import { countText } from '../../strings/plural';
+import { PRODUCTS } from '../../strings/common';
 import { explain } from '../../setup/errors';
 import Photo from '../shop/Photo';
 import StockEditor, { CellChange } from './StockGrid';
@@ -542,7 +543,7 @@ const ProductsPage: React.FC<IProductsPageProps> = ({ sp, ids, settings, onEdit,
           </div>
 
           <p className={styles.srOnly} aria-live="polite">
-            {narrowed ? `${countText(shown.length, 'product')} shown` : ''}
+            {narrowed ? `${countText(shown.length, PRODUCTS)} shown` : ''}
           </p>
 
           {shown.length === 0 ? (
