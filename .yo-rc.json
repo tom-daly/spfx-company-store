@@ -1,0 +1,23 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "react-company-store",
+    "environment": "spo",
+    "packageManager": "npm",
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "react",
+    "componentName": "CompanyStore",
+    "componentDescription": "Company store web part",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.14.0",
+    "sdksVersions": {},
+    "version": "1.23.2",
+    "libraryName": "react-company-store",
+    "libraryId": "6ae9aa77-5f35-49e1-a5d5-921195831b37",
+    "solutionShortDescription": "react-company-store description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false
+  }
+}

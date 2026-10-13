@@ -1,0 +1,254 @@
+// What the store's stylesheets share: colours, sizes and small patterns.
+//
+// Variables and mixins only. No classes here: every stylesheet that uses this
+// file gets its own copy of anything it outputs. And only // comments, because
+// a /* */ comment would be copied into every stylesheet too.
+//
+// A theme colour inside a border or outline shorthand is dropped by the build,
+// so the mixins below always write the width and style first, then the colour
+// on its own line.
+
+// ---------- colours from the site's theme ----------
+// The store matches whatever site it sits on.
+
+$primary: "[theme:themePrimary, default: #0078d4]";
+$primaryHover: "[theme:themeDarkAlt, default: #106ebe]";
+$primaryDeep: "[theme:themeDark, default: #005a9e]";
+$primarySoft: "[theme:themeLighterAlt, default: #eff6fc]";
+$onPrimary: "[theme:primaryButtonText, default: #ffffff]";
+
+$text: "[theme:bodyText, default: #323130]";
+// Two different theme slots that happen to share a default grey.
+$text2: "[theme:bodySubtext, default: #605e5c]";
+$subtext: "[theme:neutralSecondary, default: #605e5c]";
+$faint: "[theme:neutralTertiary, default: #a19f9d]";
+
+$line: "[theme:neutralLight, default: #edebe9]";
+$lineStrong: "[theme:neutralTertiaryAlt, default: #c8c6c4]";
+$inputLine: "[theme:neutralSecondaryAlt, default: #8a8886]";
+
+$surface: "[theme:bodyBackground, default: #ffffff]";
+$wash: "[theme:neutralLighter, default: #f3f2f1]";
+$washAlt: "[theme:neutralLighterAlt, default: #faf9f8]";
+
+$errorText: "[theme:errorText, default: #a4262c]";
+
+// ---------- fixed colours ----------
+// Warnings, "done" and Delete mean the same thing on every site, so they keep these.
+
+$warnText: #8a4b00;
+$warnSoft: #fff4ce;
+$goodText: #107c10;
+$goodSoft: #dff6dd;
+$danger: #a4262c;
+$dangerSoft: #fde7e9;
+$onDanger: #ffffff;
+// The line through a choice that has none left: a muted red, so it reads as "gone" without shouting.
+$crossOut: #c0505a;
+
+// ---------- sizes and type ----------
+
+$r: 6px;
+$mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+
+// ---------- borders ----------
+
+// A border in a theme colour, on every side or just one ($side: top, bottom, left or right).
+@mixin edge($color, $side: null, $width: 1px, $style: solid) {
+  @if $side {
+    border-#{$side}: $width $style;
+    border-#{$side}-color: $color;
+  } @else {
+    border: $width $style;
+    border-color: $color;
+  }
+}
+
+// A box: a 1px border with the store's rounded corners.
+@mixin frame($color: $line) {
+  @include edge($color);
+  border-radius: $r;
+}
+
+// ---------- focus ----------
+
+// The 2px theme-colour ring. With no offset given, no offset is written.
+@mixin ring($offset: null) {
+  outline: 2px solid;
+  outline-color: $primary;
+  @if $offset != null {
+    outline-offset: $offset;
+  }
+}
+
+// The ring, shown when the keyboard puts focus here.
+@mixin focusRing($offset: 2px) {
+  &:focus-visible {
+    @include ring($offset);
+  }
+}
+
+// A button that takes the look around it, with the focus ring.
+@mixin plainButton {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  cursor: pointer;
+  @include focusRing;
+}
+
+// A button that looks like a link: no box, the theme colour.
+@mixin linkLook($padding: 0) {
+  padding: $padding;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: $primary;
+  cursor: pointer;
+}
+
+// ---------- small patterns ----------
+
+// There for screen readers, out of sight for everyone else.
+@mixin srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// A list with no bullets or indent.
+@mixin listReset($margin: 0, $padding: 0) {
+  margin: $margin;
+  padding: $padding;
+  list-style: none;
+}
+
+// A product photo, cropped to 4:3.
+@mixin photo4x3($width: 100%) {
+  display: block;
+  width: $width;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+// Small capitals over a list, table column or box. The colour stays with each rule.
+@mixin caps($size: 11px, $spacing: 0.05em) {
+  font-size: $size;
+  font-weight: 600;
+  letter-spacing: $spacing;
+  text-transform: uppercase;
+}
+
+// The search box with its magnifying glass, on the shop and the management pages.
+@mixin searchBox($basis: 200px, $height: 34px) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 $basis;
+  min-width: 0;
+  max-width: 320px;
+  height: $height;
+  padding: 0 10px;
+  box-sizing: border-box;
+  background: $surface;
+  @include frame($inputLine);
+
+  &:focus-within {
+    border-color: $primary;
+    box-shadow: 0 0 0 1px $primary;
+  }
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: $text;
+    font: inherit;
+    // The box around it shows focus instead.
+    outline: none;
+  }
+}
+
+// The search box's magnifying glass: Fluent's Search icon.
+@mixin searchMark {
+  flex: none;
+  font-size: 14px;
+  line-height: 1;
+  color: $subtext;
+}
+
+// A quick-filter pill on the management pages.
+@mixin filterPill($gap, $radius) {
+  display: inline-flex;
+  align-items: center;
+  gap: $gap;
+  height: 32px;
+  padding: 0 12px;
+  @include edge($lineStrong);
+  border-radius: $radius;
+  background: $surface;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  @include focusRing;
+
+  &:hover {
+    background: $wash;
+  }
+}
+
+// "Nothing here": a dashed box with centred words.
+@mixin dashedNote($padding) {
+  padding: $padding;
+  @include edge($lineStrong, $style: dashed);
+  border-radius: $r;
+  color: $subtext;
+  text-align: center;
+}
+
+// ---------- order totals ----------
+
+// The column of subtotal, delivery and total under a cart or checkout.
+@mixin totals($rowGap: null) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: $rowGap;
+  }
+
+  span:last-child {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// The last line of those totals: what it all comes to.
+@mixin grandTotal {
+  padding-top: 6px;
+  @include edge($line, top);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+// "Total" and the amount, under a line, at the foot of an order's items.
+@mixin totalLine($color, $margin: 6px, $padding: 6px) {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: $margin 0 0;
+  padding-top: $padding;
+  @include edge($color, top);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

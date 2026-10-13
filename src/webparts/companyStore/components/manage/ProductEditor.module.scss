@@ -1,0 +1,537 @@
+// Colours come from the site's theme, so the editor matches whatever site it sits on.
+@use '../shared' as *;
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: $text;
+}
+
+/* ---------- the top: back, the heading, and the buttons ---------- */
+
+.back {
+  align-self: flex-start;
+  @include linkLook(2px 0);
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  @include focusRing;
+
+  &:disabled {
+    color: $subtext;
+    cursor: default;
+  }
+}
+
+.topBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: $text;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.loading {
+  margin-top: 32px;
+}
+
+/* ---------- the form ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 8px;
+}
+
+/* Details beside price and photos when there's room for both; one under the other when there isn't. */
+.twoUp {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.main {
+  flex: 1.15 1 380px;
+}
+
+.side {
+  display: flex;
+  flex: 0.85 1 300px;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 16px 20px 20px;
+  @include frame;
+  background: $surface;
+}
+
+.heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: $text;
+}
+
+.hint {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: $subtext;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.narrow {
+  max-width: 240px;
+}
+
+.grow {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+/* Save and Cancel again at the end, so a long form doesn't mean scrolling back up. */
+.bottomBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+/* ---------- photos ---------- */
+
+/* The product's photos are 96px wide; a choice's (with .small) are 64px, so six choices still fit. */
+.pics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 10px;
+  align-items: flex-start;
+  // Room for the ✕ that sits over each photo's corner.
+  @include listReset($padding: 7px 7px 0 0);
+}
+
+.pic {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 96px;
+}
+
+.frame {
+  position: relative;
+  display: block;
+}
+
+.shot {
+  @include photo4x3;
+  box-sizing: border-box;
+  @include edge($line);
+  border-radius: 5px;
+  background: $wash;
+}
+
+.picRemove {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  @include edge($lineStrong);
+  border-radius: 50%;
+  background: $surface;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  color: $errorText;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+
+  &:hover {
+    background: $wash;
+  }
+
+  @include focusRing(1px);
+}
+
+/* Under each photo: earlier, "Cover" or "Make cover", later. */
+.picBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  min-height: 20px;
+}
+
+.move,
+.moveGap {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+.move {
+  box-sizing: border-box;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  color: $subtext;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $line;
+    background: $wash;
+    color: $text;
+  }
+
+  @include focusRing(1px);
+}
+
+.cover {
+  font-size: 11px;
+  color: $subtext;
+}
+
+.makeCover {
+  @include linkLook;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  @include focusRing(1px);
+}
+
+/* The "+ Add photos" tile: takes several files from the picker, or dropped on it. */
+.drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  padding: 4px;
+  @include edge($lineStrong, $width: 2px, $style: dashed);
+  border-radius: 5px;
+  background: $wash;
+  font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  color: $subtext;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+  }
+
+  &:focus-within {
+    @include ring(1px);
+  }
+}
+
+.dropOver {
+  border-color: $primary;
+  background: $primarySoft;
+  color: $primary;
+}
+
+.plus {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.small {
+  gap: 8px;
+  padding-top: 6px;
+
+  .pic {
+    width: 64px;
+  }
+
+  .picRemove {
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+  }
+
+  .move,
+  .moveGap {
+    width: 22px;
+  }
+
+  .drop {
+    padding: 2px;
+    font-size: 10px;
+  }
+
+  .plus {
+    font-size: 16px;
+  }
+}
+
+/* Out of sight but still reachable with the keyboard; its label is the button people see. */
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* ---------- what it varies by ---------- */
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 12px 8px;
+  @include frame;
+  background: $surface;
+}
+
+.optionLabel,
+.subLabel {
+  @include caps;
+  color: $subtext;
+}
+
+/* The option's name and its Remove on one line. */
+.optionBar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.subLabel {
+  margin-top: 4px;
+}
+
+.subHint {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.values {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* A choice: photo square, name, remove, all on one line; its photos open underneath. */
+.value {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.valueRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.valuePhotos {
+  // Lines up under the name box, past the photo square.
+  margin-left: 38px;
+  padding: 8px;
+  border-radius: 4px;
+  background: $wash;
+}
+
+/* The photo square: dashed and empty, or the first photo with how many there are. */
+.tile {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  overflow: hidden;
+  @include edge($lineStrong);
+  border-radius: 4px;
+  background: $wash;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $primary;
+  }
+
+  &:focus-within,
+  &:focus-visible {
+    @include ring(1px);
+  }
+}
+
+.tileEmpty {
+  display: grid;
+  place-items: center;
+  border-style: dashed;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  color: $subtext;
+
+  &:hover {
+    color: $primary;
+    background: $primarySoft;
+  }
+}
+
+.tileOpen {
+  border-color: $primary;
+  box-shadow: 0 0 0 1px $primary;
+}
+
+.tileOver {
+  @include edge($primary, $width: 2px, $style: dashed);
+  background: $primarySoft;
+}
+
+.tileImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tileCount {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  min-width: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.65);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 14px;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* Quiet buttons: Remove on an option, ✕ on a choice, + Add a choice. */
+.textButton,
+.addChoice {
+  flex: none;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: $primary;
+  cursor: pointer;
+
+  &:hover {
+    background: $primarySoft;
+  }
+
+  &:focus-visible {
+    @include ring;
+  }
+}
+
+.textButton {
+  color: $subtext;
+
+  &:hover {
+    color: $errorText;
+    background: $wash;
+  }
+}
+
+.addChoice {
+  align-self: flex-start;
+  margin-left: 32px;
+}
+
+.removeValue {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1;
+  color: $subtext;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $wash;
+    color: $errorText;
+  }
+
+  &:focus-visible {
+    @include ring;
+  }
+
+  &:disabled {
+    visibility: hidden;
+  }
+}

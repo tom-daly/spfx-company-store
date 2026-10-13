@@ -1,0 +1,389 @@
+@use '../shared' as *;
+
+/*
+ * The orders page. Colours come from the site's theme so it looks like
+ * part of the site; only the "email not sent" warning and the green "saved"
+ * keep fixed colours, because they mean the same thing on every site.
+ */
+
+.orders {
+  color: $text;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.srOnly {
+  @include srOnly;
+}
+
+/* ---------- heading, summary and Refresh ---------- */
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  .title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+}
+
+.summary {
+  margin: 4px 0 0;
+  color: $subtext;
+}
+
+.headActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.loading {
+  padding: 32px 0;
+}
+
+.message {
+  margin-bottom: 12px;
+}
+
+/* ---------- filters and search ---------- */
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter {
+  margin: 0;
+  color: inherit;
+  box-sizing: border-box;
+  @include filterPill(7px, 999px);
+
+  &.on {
+    background: $primary;
+    border-color: $primary;
+    color: $onPrimary;
+
+    &:hover {
+      background: $primaryHover;
+      border-color: $primaryHover;
+    }
+
+    .count {
+      background: rgba(255, 255, 255, 0.25);
+      color: inherit;
+    }
+  }
+}
+
+.count {
+  min-width: 18px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: $wash;
+  color: $subtext;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.search {
+  @include searchBox;
+}
+
+/* The search box's magnifying glass: Fluent's Search icon. */
+.searchMark {
+  @include searchMark;
+}
+
+.note {
+  margin: 0 0 12px;
+  color: $subtext;
+  font-size: 13px;
+}
+
+.empty {
+  @include dashedNote(40px 16px);
+}
+
+/* ---------- the table ---------- */
+
+/* Scrolls sideways on a narrow screen rather than squashing the columns. */
+.tableWrap {
+  overflow-x: auto;
+  @include frame;
+  background: $surface;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+
+  th,
+  td {
+    padding: 9px 14px;
+    @include edge($line, bottom);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  th {
+    background: $washAlt;
+    color: $subtext;
+    @include caps(12px, 0.04em);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.row {
+  cursor: pointer;
+
+  &:hover td {
+    background: $washAlt;
+  }
+
+  &.open td {
+    background: $wash;
+    border-bottom-color: transparent;
+  }
+}
+
+.caret {
+  @include plainButton;
+  width: 24px;
+  height: 24px;
+  margin: 0 6px 0 -6px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: $subtext;
+  font-size: 12px;
+  line-height: 24px;
+  text-align: center;
+
+  &:hover {
+    background: $line;
+    color: $text;
+  }
+}
+
+.number {
+  font-family: $mono;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.pill,
+.warn {
+  display: inline-flex;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pill {
+  padding: 2px 10px;
+}
+
+.pickUp {
+  background: $wash;
+  color: $subtext;
+}
+
+.delivery {
+  background: $primarySoft;
+  color: $primaryDeep;
+}
+
+.warn {
+  padding: 1px 9px;
+  background: $warnSoft;
+  color: $warnText;
+}
+
+.statusCell {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: default;
+}
+
+/* Wide enough for "Ready for pick-up" in full. The table scrolls sideways rather than squeezing it. */
+.status {
+  flex: none;
+  width: 176px;
+}
+
+/* Ready for pick-up: waiting on the person to collect it, so it stands out from the steps still on the owners. */
+.ready :global(.ms-Dropdown-title) {
+  background: $primarySoft;
+  border-color: $primary;
+  color: $primaryDeep;
+  font-weight: 600;
+}
+
+.errorRow td {
+  padding: 0 14px 10px;
+  white-space: normal;
+}
+
+/* ---------- an order opened out ---------- */
+
+.detailRow td {
+  padding: 14px 18px 18px;
+  background: $wash;
+  white-space: normal;
+}
+
+/* Edit order, and the word that it saved. */
+.detailBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.savedNote {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: $goodText;
+  font-weight: 600;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px 28px;
+}
+
+.label {
+  margin: 0 0 6px;
+  color: $subtext;
+  @include caps(12px, 0.04em);
+}
+
+/* Ready by, tracking and picked up on, each under its own small heading below the address. */
+.fact {
+  margin-top: 12px;
+}
+
+.text {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.address {
+  margin: 0 0 4px;
+  white-space: pre-line;
+}
+
+.quiet {
+  margin: 0 0 4px;
+  color: $subtext;
+}
+
+/* The time an order was placed, under its day in the table. */
+.time {
+  display: block;
+  color: $subtext;
+  font-size: 12px;
+}
+
+.items {
+  @include listReset;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 2px 0;
+  }
+}
+
+.amount {
+  color: $subtext;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.total {
+  @include totalLine($lineStrong);
+}
+
+.orderNote {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Across the full width under the rest, since a line can run long. */
+.history {
+  margin-top: 18px;
+}
+
+.historyList {
+  @include listReset;
+
+  li {
+    padding: 5px 0 5px 12px;
+    @include edge($lineStrong, left, 2px);
+    overflow-wrap: anywhere;
+  }
+
+  // The newest change stands out a little from the ones before it.
+  li:first-child {
+    border-left-color: $primary;
+  }
+}
+
+.historyWho {
+  font-weight: 600;
+}
+
+.historyTime {
+  color: $subtext;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyDot {
+  color: $subtext;
+}
+
+.detailFoot {
+  margin: 16px 0 0;
+  padding-top: 12px;
+  @include edge($lineStrong, top);
+  font-size: 13px;
+}

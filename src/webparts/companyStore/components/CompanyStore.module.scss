@@ -1,0 +1,139 @@
+@use 'shared' as *;
+
+.companyStore {
+  color: $text;
+  color: var(--bodyText);
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  h3 {
+    margin: 20px 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.notice {
+  padding: 24px 0;
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+.setup {
+  max-width: 680px;
+
+  p {
+    margin: 0 0 12px;
+  }
+}
+
+.lists {
+  margin: 0 0 16px;
+
+  dt {
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  dd {
+    margin: 2px 0 0;
+  }
+}
+
+.go {
+  margin-top: 16px;
+}
+
+/* ---------- setup progress ---------- */
+
+.steps {
+  @include listReset(16px 0 0);
+
+  li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 6px 0;
+  }
+}
+
+.mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+  box-sizing: border-box;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 1px;
+}
+
+.stepError {
+  font-size: 12px;
+  color: $danger;
+}
+
+.waiting {
+  .mark { border: 1.5px solid #c8c6c4; }
+  .stepText { color: #605e5c; }
+}
+
+.running {
+  .stepText { font-weight: 600; }
+}
+
+.done .mark { background: $goodText; }
+.failed .mark { background: $danger; }
+
+.skipped {
+  .mark { background: #8a8886; }
+  .stepText { color: #605e5c; }
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.srOnly {
+  @include srOnly;
+}
+
+/* ---------- next step ---------- */
+
+.nextStep {
+  margin: 8px 0;
+  padding: 20px;
+  border: 1px solid #edebe9;
+  border-radius: 6px;
+  max-width: 680px;
+
+  p {
+    margin: 0 0 4px;
+  }
+}
+
+/* The back arrow in "All products" style links: sits on the text's line, a little smaller. */
+.backArrow {
+  margin-right: 6px;
+  font-size: 0.85em;
+  vertical-align: -1px;
+}

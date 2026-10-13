@@ -1,0 +1,392 @@
+@use '../shared' as *;
+
+/*
+ * The Products & stock page. Colours come from the site's theme; only the stock
+ * warnings and Delete keep fixed colours, because they mean the same thing on every site.
+ */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: $text;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.srOnly {
+  @include srOnly;
+}
+
+/* ---------- the top: title, summary and the add buttons ---------- */
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.headText {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.summary {
+  margin: 4px 0 0;
+  color: $subtext;
+}
+
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.retry {
+  margin-top: 8px;
+}
+
+.loading {
+  padding: 32px 0;
+}
+
+/* No products at all: a friendly card instead of an empty table. */
+.empty {
+  max-width: 680px;
+  padding: 20px 24px 24px;
+  @include frame;
+  background: $surface;
+
+  p {
+    margin: 0 0 16px;
+    color: $subtext;
+  }
+}
+
+.emptyTitle {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ---------- search and the quick filters ---------- */
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.search {
+  @include searchBox;
+}
+
+/* The search box's magnifying glass: Fluent's Search icon. */
+.searchMark {
+  @include searchMark;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter {
+  color: $text;
+  @include filterPill(6px, 16px);
+}
+
+.filterOn,
+.filterOn:hover {
+  border-color: $primary;
+  background: $primary;
+  color: $onPrimary;
+}
+
+.filterCount {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+/* A search or filter that leaves nothing. */
+.nothing {
+  @include dashedNote(28px 16px);
+}
+
+.linkButton {
+  @include linkLook;
+  text-decoration: underline;
+  @include focusRing;
+}
+
+/* ---------- the table ---------- */
+
+/* Scrolls sideways on narrow screens rather than squashing the columns or widening the page. */
+.tableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+  @include frame;
+  background: $surface;
+}
+
+/* Child selectors only, so the stock sheets opened inside a row keep their own look. */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+
+  > thead > tr > th,
+  > tbody > tr > td {
+    padding: 10px 14px;
+    @include edge($line, bottom);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  > thead > tr > th {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    @include caps;
+    color: $subtext;
+  }
+
+  > tbody > tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  > thead > tr > .num,
+  > tbody > tr > .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  > tbody > tr > .productCell {
+    min-width: 180px;
+    max-width: 320px;
+    white-space: normal;
+  }
+
+  > tbody > tr > .varies {
+    max-width: 220px;
+    white-space: normal;
+    color: $subtext;
+  }
+
+  // A row with its stock open runs straight on into the stock underneath.
+  > tbody > .rowOpen > td {
+    background: $wash;
+    border-bottom-color: transparent;
+  }
+
+  > tbody > .problemRow > td {
+    padding-top: 0;
+    white-space: normal;
+  }
+
+  > tbody > .drawerRow > td {
+    padding: 0;
+    background: $wash;
+    white-space: normal;
+  }
+}
+
+.photoCell {
+  width: 56px;
+}
+
+.thumb {
+  @include photo4x3(56px);
+  box-sizing: border-box;
+  @include edge($line);
+  border-radius: 4px;
+}
+
+/* Switched off: the photo fades, so off products stand out down the column. */
+.off .thumb {
+  opacity: 0.45;
+}
+
+.name {
+  display: block;
+  font-weight: 600;
+}
+
+.desc {
+  display: block;
+  font-size: 12px;
+  color: $subtext;
+}
+
+.code {
+  display: block;
+  margin-top: 2px;
+  font-family: $mono;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: $faint;
+}
+
+/* The total in stock: plain when there's plenty, amber when running low, red when there's none. */
+.badge {
+  display: inline-block;
+  min-width: 28px;
+  padding: 2px 10px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: $wash;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: $text;
+}
+
+.badgeLow {
+  background: $warnSoft;
+  color: $warnText;
+}
+
+.badgeOut {
+  background: $dangerSoft;
+  color: $danger;
+}
+
+.note {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: $subtext;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rowActions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Small buttons for each row: Stock, Edit, Delete. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  @include edge($lineStrong);
+  border-radius: 4px;
+  background: $surface;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: $text;
+  cursor: pointer;
+  @include focusRing;
+
+  &:hover:not(:disabled) {
+    background: $wash;
+  }
+
+  &:disabled {
+    color: $faint;
+    cursor: default;
+  }
+}
+
+.btnDanger {
+  color: $danger;
+
+  &:hover:not(:disabled) {
+    background: $dangerSoft;
+  }
+}
+
+.btnConfirm,
+.btnConfirm:hover:not(:disabled) {
+  border-color: $danger;
+  background: $danger;
+  color: $onDanger;
+}
+
+.confirm {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* As tall as Fluent's own buttons, beside Save and Cancel in the editor. */
+.large .btn {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 2px;
+  font-size: 14px;
+}
+
+/* ---------- under a row: what went wrong, and the stock ---------- */
+
+.problem {
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: $dangerSoft;
+  font-size: 13px;
+  color: $danger;
+}
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 20px 20px 84px;
+}
+
+.drawerNote {
+  margin: 0;
+  font-size: 13px;
+  color: $subtext;
+}
+
+.drawerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.savedNote {
+  font-size: 13px;
+  font-weight: 600;
+  color: $subtext;
+}
+
+/* On a phone the stock starts at the left edge rather than under the photos. */
+@media (max-width: 640px) {
+  .drawer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+/* A chevron after a button's words, like "Stock". */
+.btnIcon {
+  margin-left: 4px;
+  font-size: 10px;
+}
