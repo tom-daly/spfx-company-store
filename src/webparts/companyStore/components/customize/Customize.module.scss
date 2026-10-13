@@ -1,0 +1,258 @@
+@use '../shared' as *;
+
+/* ---------- the Customize view ---------- */
+
+/* The heading's size and weight come from the store's own h2. */
+.customize {
+  h2 {
+    margin: 0 0 4px;
+  }
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.intro {
+  margin: 0;
+  max-width: 62ch;
+  color: $subtext;
+}
+
+.topActions,
+.barActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  align-items: flex-end;
+  justify-content: space-between;
+  @include edge($line, bottom);
+  margin: 12px 0 20px;
+}
+
+.showFor {
+  :global(.ms-ChoiceFieldGroup-flexContainer) {
+    display: flex;
+    gap: 16px;
+  }
+}
+
+.stage {
+  padding: 4px 0 24px;
+}
+
+.narrow {
+  max-width: 560px;
+}
+
+.muted {
+  color: $subtext;
+}
+
+/* ---------- the email as it lands ---------- */
+
+/* Which email to show: the options sit in a row and wrap on a phone. */
+.whichEmail {
+  margin-bottom: 4px;
+
+  :global(.ms-ChoiceFieldGroup-flexContainer) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 20px;
+  }
+}
+
+.emailNote {
+  margin: 4px 0 12px;
+  max-width: 640px;
+  color: $subtext;
+}
+
+.email {
+  max-width: 640px;
+  @include frame;
+  overflow: hidden;
+}
+
+.emailHead {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 14px 18px;
+  background: $washAlt;
+  @include edge($line, bottom);
+  font-size: 13px;
+
+  dt {
+    color: $subtext;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    /* Long addresses break rather than push the preview wider than a phone. */
+    overflow-wrap: anywhere;
+  }
+}
+
+.emailBody {
+  padding: 18px;
+  font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: #242424;
+  background: #ffffff;
+}
+
+.emailOpening {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 480px) {
+  .emailHead,
+  .emailBody {
+    padding: 12px;
+  }
+}
+
+/* ---------- words that can be clicked and changed ---------- */
+
+.editable {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: -4px -6px;
+  padding: 4px 6px;
+  box-sizing: content-box;
+  @include edge($primary, $width: 1.5px, $style: dashed);
+  border-radius: 4px;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: text;
+  white-space: pre-wrap;
+
+  &:hover,
+  &:focus-visible {
+    background: $primarySoft;
+  }
+
+  &:hover .editBadge,
+  &:focus-visible .editBadge {
+    opacity: 1;
+  }
+}
+
+.empty {
+  color: $subtext;
+  font-style: italic;
+}
+
+.editBadge {
+  position: absolute;
+  top: -10px;
+  right: 6px;
+  padding: 0 6px;
+  border-radius: 3px;
+  background: $primary;
+  color: #ffffff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 18px;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+
+.editing {
+  display: block;
+}
+
+.box {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  @include edge($primary, $width: 1.5px);
+  border-radius: 4px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  resize: vertical;
+  outline: none;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  text-align: left;
+}
+
+.fillIns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  color: $subtext;
+}
+
+.chip {
+  padding: 1px 7px;
+  @include edge($lineStrong);
+  border-radius: 999px;
+  background: $surface;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $primary;
+  }
+}
+
+.linkish {
+  @include linkLook;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.done {
+  margin-left: auto;
+  padding: 2px 12px;
+  border: 0;
+  border-radius: 3px;
+  background: $primary;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editBadge {
+    transition: none;
+  }
+}
+
+.shown {
+  color: inherit;
+}

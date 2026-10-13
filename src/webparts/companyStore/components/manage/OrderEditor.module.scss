@@ -1,0 +1,241 @@
+@use '../shared' as *;
+
+/*
+ * The panel for changing an order, the box the orders table asks with before
+ * an email, and the day picker both use. Colours come from the site's theme,
+ * as on the orders page behind them.
+ */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0 24px;
+  color: $text;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.status {
+  max-width: 220px;
+}
+
+/*
+ * The status and what goes with it: two boxes a row where there's room, one
+ * under another on a phone. Lined up by their labels along the top, so the
+ * boxes under them line up too.
+ */
+.progress {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 16px;
+  align-items: start;
+
+  .status {
+    max-width: none;
+  }
+}
+
+/* ---------- a day, picked from a calendar ---------- */
+
+/* The box and its Clear button, level along the top; the label is above both. */
+.dayField {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.dayPicker {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.clearDay {
+  flex: none;
+  height: 32px;
+}
+
+/* ---------- the box the orders table asks with ---------- */
+
+.ask {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Under the tick box's words, in line with them rather than with the box. */
+.mailbox {
+  margin: 4px 0 0 28px;
+  color: $subtext;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Looks like the labels Fluent puts on the other boxes, so every part of the form reads the same. */
+.heading {
+  margin: 0 0 6px;
+  padding: 5px 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: $subtext;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.quiet {
+  margin: 0;
+  color: $subtext;
+}
+
+.written {
+  color: $text;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- the items ---------- */
+
+.items,
+.readOnly {
+  @include listReset;
+}
+
+.readOnly li {
+  padding: 4px 0;
+  @include edge($line, bottom);
+}
+
+/* Name on the left, the quantity box, then what the line comes to. */
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 88px;
+  gap: 4px 12px;
+  align-items: start;
+  padding: 10px 0;
+  @include edge($line, bottom);
+
+  &:first-child {
+    padding-top: 0;
+  }
+}
+
+.itemName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.product {
+  font-weight: 600;
+}
+
+.meta {
+  color: $subtext;
+  font-size: 12.5px;
+}
+
+.was {
+  margin-top: 2px;
+  color: $primaryDeep;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* A line set to 0: still listed, so it can be put back, but plainly on its way off. */
+.off {
+  .product {
+    color: $subtext;
+    text-decoration: line-through;
+  }
+}
+
+.qty input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lineTotal {
+  padding-top: 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.total {
+  @include totalLine($lineStrong, $margin: 12px, $padding: 8px);
+}
+
+.wasTotal {
+  margin-right: 10px;
+  color: $subtext;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+/* ---------- how they want it, and where to ---------- */
+
+.method {
+  :global(.ms-ChoiceFieldGroup-flexContainer) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 24px;
+  }
+}
+
+/* Two boxes a row where there's room, one under another on a phone. */
+.address {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 16px;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+/* ---------- the foot of the panel ---------- */
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.buttons,
+.barActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.buttons {
+  gap: 8px 12px;
+}
+
+.barActions {
+  gap: 8px;
+}
+
+/* Narrow screens: the line total drops under the quantity rather than squeezing the name. */
+@media (max-width: 400px) {
+  .item {
+    grid-template-columns: minmax(0, 1fr) 88px;
+  }
+
+  .lineTotal {
+    grid-column: 2;
+    padding-top: 0;
+  }
+}

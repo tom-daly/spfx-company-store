@@ -1,0 +1,1006 @@
+@use '../shared' as *;
+
+/*
+ * The shop, the product page and the cart. Colours come from the site's theme
+ * so the store looks like part of the site; only stock warnings keep fixed
+ * colours, because they mean the same thing on every site.
+ */
+
+/* The cart opens in a panel outside the shop, so it sets the same text again. */
+.shop,
+.cart {
+  color: $text;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.loading {
+  padding: 32px 0;
+}
+
+.srOnly {
+  @include srOnly;
+}
+
+/* ---------- search, my orders and cart, top right ---------- */
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 0 14px;
+  margin-bottom: 20px;
+  @include edge($line, bottom);
+}
+
+.search {
+  @include searchBox(160px, 36px);
+}
+
+/* The search box's magnifying glass: Fluent's Search icon. */
+.searchMark {
+  @include searchMark;
+}
+
+/* My orders and the cart stay together, so on a narrow screen they drop under the search as a pair. */
+.barButtons {
+  display: flex;
+  flex: none;
+  gap: 12px;
+}
+
+/* My orders: the same shape as the cart, but quieter, so the cart stays the main thing. */
+.ordersButton {
+  @include plainButton;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  background: $surface;
+  @include frame($inputLine);
+  color: $text;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover {
+    background: $wash;
+  }
+}
+
+.buttonIcon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.cartButton {
+  @include plainButton;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 36px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background: $primary;
+  @include frame($primary);
+  color: $onPrimary;
+  font-weight: 600;
+
+  &:hover {
+    background: $primaryHover;
+    border-color: $primaryHover;
+  }
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: $onPrimary;
+  color: $primary;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- notes and empty states ---------- */
+
+.note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  @include frame;
+  background: $wash;
+  font-size: 13px;
+}
+
+.empty {
+  padding: 44px 10px;
+  text-align: center;
+  color: $text2;
+}
+
+.emptyTitle {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: $text;
+}
+
+/* Buttons that look like links; Back is one too. */
+.linkButton,
+.back {
+  @include linkLook;
+  margin: 0;
+  font-weight: 600;
+  @include focusRing;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ---------- the grid of products ---------- */
+
+/* Cards wrap to fit; on a very narrow column, one card fills the width. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+  gap: 16px;
+  @include listReset;
+
+  > li {
+    display: flex;
+    min-width: 0;
+  }
+}
+
+.card {
+  @include plainButton;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  background: $surface;
+  @include frame;
+  transition: box-shadow 0.14s ease, border-color 0.14s ease;
+
+  &:hover {
+    border-color: $lineStrong;
+    box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.11);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.cardPhoto {
+  @include photo4x3;
+}
+
+.cardBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px 14px;
+}
+
+.cardName {
+  font-weight: 600;
+}
+
+.cardDesc {
+  font-size: 12.5px;
+  color: $text2;
+}
+
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  // Keeps prices lined up along the bottom when descriptions differ in length.
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.price {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stock {
+  margin-left: auto;
+  font-size: 12px;
+  color: $text2;
+}
+
+.stockLow {
+  color: $warnText;
+  font-weight: 600;
+}
+
+.stockOut {
+  color: $faint;
+}
+
+/* ---------- photos ---------- */
+
+.noPhoto {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 8px;
+  background: $wash;
+  color: $subtext;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ---------- product page ---------- */
+
+/* Back on the left; Edit product (owners only) on the right. */
+.pageTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+
+  .back {
+    margin-bottom: 0;
+  }
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 14px;
+}
+
+/* Side by side when there's room, photo on top when there isn't. Wraps on the
+   web part's own width, so it also stacks in a narrow page column. */
+.detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px 32px;
+}
+
+.gallery {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  max-width: 640px;
+}
+
+/* The big picture, with previous and next on its edges when there is more than one. */
+.stage {
+  position: relative;
+
+  // Only a click on the picture puts focus here (so the arrow keys work); it is never a Tab stop.
+  &:focus {
+    outline: none;
+  }
+}
+
+.mainPhoto {
+  @include photo4x3;
+  box-sizing: border-box;
+  @include frame;
+}
+
+.flip {
+  @include plainButton;
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  // The ‹ and › characters sit a little low in their line.
+  padding: 0 0 3px;
+  box-sizing: border-box;
+  background: $surface;
+  @include edge($lineStrong);
+  border-radius: 50%;
+  box-shadow: 0 1.6px 3.6px rgba(0, 0, 0, 0.13), 0 0.3px 0.9px rgba(0, 0, 0, 0.11);
+  color: $text;
+  font-size: 24px;
+  line-height: 1;
+  transform: translateY(-50%);
+
+  &:hover {
+    background: $wash;
+    border-color: $inputLine;
+  }
+}
+
+.flipPrev {
+  left: 10px;
+}
+
+.flipNext {
+  right: 10px;
+}
+
+/* Every picture in the gallery, the one on show outlined. A choice's thumbnail
+   has its name under it. They wrap onto more rows in a narrow column. */
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.thumb {
+  @include plainButton;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 78px;
+  padding: 0;
+  overflow: hidden;
+  background: $surface;
+  @include edge($line, $width: 2px);
+  border-radius: 5px;
+
+  &:hover:not(:disabled) {
+    border-color: $lineStrong;
+  }
+
+  &[aria-current="true"] {
+    border-color: $primary;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.45;
+  }
+}
+
+.thumbPhoto {
+  @include photo4x3;
+}
+
+.thumbName {
+  display: block;
+  padding: 3px 4px 4px;
+  overflow: hidden;
+  font-size: 11px;
+  color: $text2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .thumb[aria-current="true"] & {
+    color: $text;
+    font-weight: 600;
+  }
+}
+
+.thumbOut::after {
+  content: "";
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  top: 38%;
+  @include edge($crossOut, top);
+  transform: rotate(-24deg);
+  pointer-events: none;
+}
+
+.buy {
+  display: flex;
+  flex: 1 1 300px;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 520px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+
+  // Focus is put here for screen readers when the page opens; it isn't something to click.
+  &:focus {
+    outline: none;
+  }
+}
+
+.code {
+  margin-top: 2px;
+  font-family: $mono;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: $subtext;
+}
+
+.bigPrice {
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pill {
+  align-self: flex-start;
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pillGood {
+  background: $goodSoft;
+  color: $goodText;
+}
+
+.pillLow {
+  background: $warnSoft;
+  color: $warnText;
+}
+
+.pillOut {
+  background: $wash;
+  color: $subtext;
+}
+
+.lede {
+  margin: 0;
+  max-width: 60ch;
+  color: $text2;
+  // Keeps the owner's line breaks.
+  white-space: pre-line;
+}
+
+.specs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  @include listReset;
+
+  li {
+    display: flex;
+    gap: 10px;
+    font-size: 13px;
+  }
+}
+
+.specLabel {
+  flex: none;
+  width: 92px;
+  color: $subtext;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.fieldLabel {
+  @include caps(12px);
+  color: $text2;
+}
+
+.inCart {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: $text2;
+}
+
+/* ---------- option pickers ---------- */
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice {
+  @include plainButton;
+  position: relative;
+  min-width: 46px;
+  padding: 8px 12px;
+  overflow: hidden;
+  background: $surface;
+  @include frame($lineStrong);
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    border-color: $primary;
+  }
+
+  &[aria-pressed="true"] {
+    background: $primary;
+    border-color: $primary;
+    color: $onPrimary;
+  }
+}
+
+/* None left: kept on the page, struck through and not clickable, because
+   seeing what has run out is part of the answer. */
+.choiceOut {
+  background: $wash;
+  border-style: dashed;
+  color: $faint;
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: -12%;
+    right: -12%;
+    top: 50%;
+    @include edge($crossOut, top);
+    transform: rotate(-16deg);
+    pointer-events: none;
+  }
+}
+
+.pickNote {
+  margin: -8px 0 0;
+  font-size: 12px;
+  color: $text2;
+}
+
+/* ---------- quantity stepper ---------- */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  width: max-content;
+
+  button {
+    @include plainButton;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: $surface;
+    @include edge($inputLine);
+    color: $text;
+    font-size: 17px;
+    line-height: 1;
+
+    &:first-child {
+      border-radius: $r 0 0 $r;
+    }
+
+    &:last-child {
+      border-radius: 0 $r $r 0;
+    }
+
+    &:hover {
+      background: $wash;
+    }
+
+    &[aria-disabled="true"] {
+      color: $faint;
+      cursor: default;
+      background: $surface;
+    }
+  }
+}
+
+.stepperValue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  height: 34px;
+  box-sizing: border-box;
+  @include edge($inputLine, top);
+  @include edge($inputLine, bottom);
+  background: $surface;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- buttons ---------- */
+
+.btn {
+  @include plainButton;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  @include frame($primary);
+  background: $primary;
+  color: $onPrimary;
+  font-weight: 600;
+
+  &:hover {
+    background: $primaryHover;
+    border-color: $primaryHover;
+  }
+
+  &:disabled {
+    background: $wash;
+    border-color: $line;
+    color: $subtext;
+    cursor: default;
+  }
+}
+
+.wide {
+  width: 100%;
+}
+
+.ghost {
+  background: transparent;
+  border-color: $inputLine;
+  color: $text;
+
+  &:hover {
+    background: $wash;
+    border-color: $inputLine;
+  }
+}
+
+.small {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.remove {
+  background: transparent;
+  border-color: $lineStrong;
+  color: $danger;
+
+  &:hover {
+    background: $dangerSoft;
+    border-color: $lineStrong;
+  }
+}
+
+/* ---------- the cart panel ---------- */
+
+.panelNav {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.closeButton {
+  @include plainButton;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: $r;
+  background: transparent;
+  color: $text2;
+  font-size: 16px;
+  line-height: 1;
+
+  &:hover {
+    background: $wash;
+    color: $text;
+  }
+}
+
+.lines {
+  @include listReset;
+}
+
+.line {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  @include edge($line, bottom);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.lineShot {
+  @include photo4x3(66px);
+  flex: none;
+  @include edge($line);
+  border-radius: 4px;
+}
+
+.lineMid {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-width: 0;
+}
+
+.lineName {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.lineVariant {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.lineMeta {
+  font-size: 12px;
+  color: $text2;
+}
+
+.lineRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.linePrice {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cartFoot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: $text;
+}
+
+.totals {
+  @include totals;
+}
+
+.grand {
+  @include grandTotal;
+}
+
+/* ---------- my orders ---------- */
+
+.myOrders {
+  // Two classes deep, so these win over the store's own heading sizes.
+  .pageTitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .orderNumber {
+    margin: 0;
+    font-family: $mono;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+}
+
+.pageIntro {
+  margin: 2px 0 18px;
+  color: $text2;
+}
+
+.emptyAction {
+  margin-top: 14px;
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @include listReset(0 0 16px);
+}
+
+.orderCard {
+  padding: 16px;
+  background: $surface;
+  @include frame;
+}
+
+/* The number and when it was placed on the left; pick up or delivery on the right. */
+.orderHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 18px;
+}
+
+.orderPlaced {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: $text2;
+}
+
+/* The steps across the card, one column each, joined by a line that fills in
+   as the order moves on. Four fit side by side even on a phone. */
+.progress {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  @include listReset(0 0 16px);
+}
+
+.progressStep {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 4px;
+  text-align: center;
+
+  // The line back to the step before, through the middle of the marks.
+  &::before {
+    content: "";
+    position: absolute;
+    top: 11px;
+    left: -50%;
+    right: 50%;
+    height: 2px;
+    background: $lineStrong;
+  }
+
+  &:first-child::before {
+    display: none;
+  }
+}
+
+/* Reached: the line up to it fills in too. */
+.stepDone::before,
+.stepNow::before {
+  background: $primary;
+}
+
+.stepMark {
+  // Above the line.
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  @include edge($lineStrong, $width: 2px);
+  border-radius: 50%;
+  background: $surface;
+  color: $onPrimary;
+  font-size: 12px;
+  line-height: 1;
+
+  .stepDone & {
+    background: $primary;
+    border-color: $primary;
+  }
+
+  // Where it is now, with more to come: a dot in a ring.
+  .stepNow:not(.stepDone) & {
+    border-color: $primary;
+
+    &::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: $primary;
+    }
+  }
+}
+
+.stepName {
+  font-size: 12px;
+  line-height: 1.3;
+  color: $text2;
+  overflow-wrap: anywhere;
+
+  .stepDone & {
+    color: $text;
+  }
+
+  .stepNow & {
+    color: $text;
+    font-weight: 600;
+  }
+}
+
+/* Where it's at, in words, under the steps. */
+.whereAt {
+  padding: 10px 14px;
+  border-radius: $r;
+  background: $wash;
+}
+
+.whereAtText {
+  margin: 0;
+  font-weight: 600;
+}
+
+.whereAtMore {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: $text2;
+  overflow-wrap: anywhere;
+
+  a {
+    color: $primary;
+    font-weight: 600;
+  }
+}
+
+/* Keeps the line breaks the store typed. */
+.keepLines {
+  white-space: pre-line;
+}
+
+/* What was ordered, and where it's going, side by side when there's room. */
+.orderInfo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 16px 28px;
+  margin-top: 16px;
+}
+
+/* The same small capitals as a field's label, with room under them. */
+.infoLabel {
+  margin: 0 0 6px;
+  @include caps(12px);
+  color: $text2;
+}
+
+.orderItems {
+  @include listReset;
+
+  li {
+    padding: 2px 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.orderTotal {
+  @include totalLine($line);
+}
+
+.shipTo {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.quiet {
+  margin: 0;
+  color: $text2;
+}
